@@ -1,0 +1,249 @@
+<?php 
+	include 'header.phtml';
+?>
+	<div class="row page-titles">
+		<div class="col-md-5 align-self-center">
+			<h3 class="text-themecolor"><i class="mdi mdi-playlist-check fa-lg"></i> <strong>Lista de Asistencia</strong> <span class="strFecha"></span></h3>
+		</div>
+		<div class="col-md-7">
+			<div class="form-inline justify-content-end">
+				<input type="date" class="form-control form-control-sm m-r-10" id="fecha" value="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d') ?>">
+				<?php if(in_array(MOD_ASIST_LISTA_CERRAR, $permisos)):?>
+				<button type="button" class="btn btn-sm btn-warning m-r-10" id="btnClose"><i class="mdi mdi-close"></i> Cerrar Lista</button>
+				<?php endif; ?>
+				<?php if(in_array(MOD_ASIST_IMPRIMIR, $permisos)):?>
+					<button class="btn btn-sm btn-secondary" id="btnPrintBajas"><i class="mdi mdi-printer fa-lg"></i> Imprimir Bajas</button>
+					&nbsp;&nbsp;
+					<button class="btn btn-sm btn-secondary" id="btnPrint"><i class="mdi mdi-printer fa-lg"></i> Imprimir</button>
+				<?php endif; ?>
+			</div>
+		</div>
+	</div>
+	<div class="container-fluid">
+		<div class="row justify-content-center">
+			<div class="col-10">
+				<div class="card" id="info">
+					<div class="card-body text-center">
+						<div class="form-check form-check-inline">
+							<input class="form-check-input" type="checkbox" id="chk-tipo1" value="1" name="chk-tipo" checked>
+							<label class="form-check-label" for="chk-tipo1">Beneficiarios</label>
+						</div>
+						<div class="form-check form-check-inline">
+							<input class="form-check-input" type="checkbox" id="chk-tipo2" value="3" name="chk-tipo">
+							<label class="form-check-label" for="chk-tipo2">Comunidad</label>
+						</div>
+						<div class="form-check form-check-inline">
+							<input class="form-check-input" type="checkbox" id="chk-tipo3" value="2" name="chk-tipo">
+							<label class="form-check-label" for="chk-tipo3">Voluntarios</label>
+						</div>
+						<div class="form-check form-check-inline">
+							<input class="form-check-input" type="checkbox" id="chk-tipo4" value="4" name="chk-tipo">
+							<label class="form-check-label" for="chk-tipo4">COVID-19</label>
+						</div>
+						<br>
+						<span></span> titulares en lista. <strong class="text-dark"><span></span> asistencias</strong>, <span></span> restantes.
+						<hr>
+						<table id="tbl-lista" class="table table-sm table-striped table-hover">
+							<thead>
+								<tr>
+									<th class="text-left">Credencial</th>
+									<th>Nombre</th>
+									<th id="falt">Faltas</th>
+									<th>Hora</th>
+									<th></th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?php include 'footer.phtml';?>
+	<script type="text/javascript">
+		$(function() {
+			$('#mnu-asist').addClass('active');
+			$apiUrl = '<?= URL_API ?>';
+			$listaCerrada = false;
+
+			$('input[name=chk-tipo]').click(function(){ getLista() });
+
+			getLista();
+			function getLista(){
+				blockPage();
+				$('#tbl-lista tbody').empty();
+				tipo = [];
+				$.each($('input[name=chk-tipo]:checked'), function (index, elem) { tipo.push($(elem).val()); });
+				$.get($apiUrl+"asistencia/getLista/"+tipo.toString()+'/'+$('#fecha').val(),
+					function (resp) {
+						asist = 0;
+						if(!resp.cerrado){
+							$listaCerrada = true;
+						}else{
+							$listaCerrada = false;
+						}
+						$.each(resp.lista, function (index, item) { 
+							addRowItem(item); 
+							if(item.hora != null) asist++;
+						});
+						$('#info span:eq(0)').html(resp.lista.length);
+						$('#info span:eq(1)').html(asist);
+						$('#info span:eq(2)').html(resp.lista.length-asist);
+						$('.strFecha').html(resp.strFecha);
+						if(resp.cerrado) { $('#btnClose').addClass('d-none'); $cerrad = true; $('#btnPrintBajas').removeClass('d-none'); }
+						else {$('#btnClose').removeClass('d-none'); $cerrad = false; $('#btnPrintBajas').addClass('d-none'); }
+						$.unblockUI();
+					},
+					"json"
+				);
+			}
+
+			function addRowItem(item){
+				tr = $('<tr></tr>');
+				tr.append('<td class="text-left">'+item.credencial+'</td>');
+				tr.append('<td>'+item.nombre+'</td>');
+
+				var selec = $('#fecha').val();
+				var f1 = new Date(selec.substring(0,4), selec.substring(5,7)-1, selec.substring(8,10));
+				var f2 = new Date(2023, (9)-1, 27);
+				// var f2 = new Date();
+				// var f3 = new Date(f2.setDate(f2.getDate() +0));
+				// var f4 = new Date(f2.setDate(f2.getDate() -7));
+				
+				// console.log(f1.getTime());
+				// console.log(f2.getTime());
+				// console.log(f3.getTime());
+				// console.log("|");
+				
+				// if(f1.getTime() < f3.getTime() && f1.getTime() > f4.getTime()){
+				if(f1 <= f2){
+					$('#falt').hide();
+				}else{
+					tr.append('<td>'+item.faltas+'</td>');
+					$('#falt').show();
+				}
+
+				tr.append('<td>'+(item.hora != null ? item.hora : '--')+'</td>');
+				tr.append('<td>'+(item.hora != null ? '<i class="mdi mdi-check-circle text-success"></i>' : '<i class="mdi mdi-close-circle text-danger"></i>')+'</td>');
+
+				<?php if(in_array(MOD_ASIST_CANCELAR, $permisos)):?>
+				if($listaCerrada){
+					// Boton de cancelar asistencia
+					let date = new Date()
+					let day = date.getDate()
+					let month = date.getMonth() + 1
+					let year = date.getFullYear()
+					let hoy = "";
+
+					if(month < 10){
+						if(day < 10){
+							hoy = `${year}-0${month}-0${day}`
+						}else{
+							hoy = `${year}-0${month}-${day}`	
+						}
+					}else{
+						if(day < 10){
+							hoy = `${year}-${month}-0${day}`
+						}else{
+							hoy = `${year}-${month}-${day}`	
+						}
+					}
+
+					if(selec == hoy){
+						tr.append('<td>'+(item.hora != null ? '<a href="#" data-popup="tooltip" title="Cancelar Asistencia" class="btnCancelarAsist text-danger"><i class="mdi mdi-delete"></i></a>' : '')+'</td>');
+					}else{
+						tr.append('<td></td>');
+					}
+					// Boton de cancelar asistencia
+				}
+				<?php endif; ?>
+
+				$('#tbl-lista tbody').append(tr);
+			}
+
+			$('#fecha').change(function(){ if($('#fecha').val() != ''){ getLista(); }});
+
+			let recargar;
+			function doRecargar(){
+				if(!recargar){
+					recargar = setInterval(function(){ if(!$cerrad) getLista(); else clearInterval(recargar); }, 60000);
+				}
+			}
+			doRecargar();
+			<?php if(in_array(MOD_ASIST_LISTA_CERRAR, $permisos)):?>
+			$('#btnClose').click(function(){
+				faltan = $('#info span:eq(2)').text();
+				//$('#btnClose').prop('disabled', true);
+				swal({ title:"Cerrar Lista", text:"¿Seguro de cerrar el Pase de Lista? Se pondra falta a "+faltan+" beneficiarios.", type:"warning", html:true, showCancelButton:true, 
+					cancelButtonText:"Cancelar", confirmButtonColor:"#DD6B55", confirmButtonText:"Si, cerrar", closeOnConfirm:false }, 
+					function() {
+						blockPage();
+						$.ajax({ url:$apiUrl+'pase_lista/cerrarLista'+'/'+$('#fecha').val(), type:'POST', dataType:'json', success:
+							function(resp) {
+								if(resp.success) {
+									$('#btnClose').addClass('d-none');
+									getLista();
+									swal({ type:"success", title:"¡Listo!", text:'Se pusieron '+resp.faltas+' faltas y '+resp.bajas+' bajas entre Beneficiarios, Comunidad y COVID-19', timer:4000 });
+								} else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); $('#btnClose').prop('disabled', false);}
+								$.unblockUI();
+							}
+						});
+					}
+				);
+			});
+			<?php endif; ?>
+
+			$('#btnPrint').click(function(){
+				tipo = [];
+				$.each($('input[name=chk-tipo]:checked'), function (index, elem) { tipo.push($(elem).val()); });
+				window.open($apiUrl+'asistencia/getPDFLista/'+tipo.toString()+'/'+$('#fecha').val());
+			});
+
+			$('#btnPrintBajas').click(function(){
+				tipoBajas = [];
+				$.each($('input[name=chk-tipo]:checked'), function (index, elem) { tipoBajas.push($(elem).val()); });
+				window.open($apiUrl+'asistencia/getPDFListaBajas/'+tipoBajas.toString()+'/'+$('#fecha').val());
+			});
+
+			<?php if(in_array(MOD_ASIST_CANCELAR, $permisos)):?>
+			$('tbody').on('click', '.btnCancelarAsist', function(event) { 
+				tr = $(this).parents('tr');
+				cred = tr.find('td:eq(0)').text();
+				name = tr.find('td:eq(1)').text();
+				console.log(cred)
+
+				event.preventDefault();
+
+				swal({ title:"Cancelar Asistencia", text:"¿Desea cancelar Asistencia de <strong>"+name+"</strong>?", type:"warning", html:true, showCancelButton:true, cancelButtonText:"Cancelar", confirmButtonColor:"#DD6B55", confirmButtonText:"Si, cancelar", closeOnConfirm:true }, 
+					function() {
+						blockPage();
+						$.ajax({ url:$apiUrl+'asistencia/cancelar/'+cred, type:'POST', dataType:'json', data:{}, }).done(
+							function(resp) {
+							if(resp.response) {
+								swal({ type:"success", title:"¡Listo!", text:'Se ha cancelado correctamente', timer:4000 });
+								location.reload();
+							} else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); }
+							$.unblockUI();
+					});
+				});
+			});
+			<?php endif; ?>			
+
+			$('body').on("keydown", function(e) { 
+				if (e.ctrlKey && e.which === 80) { // ctrl+P
+					<?php if(in_array(MOD_ASIST_IMPRIMIR, $permisos)):?>
+						tipo = [];
+						$.each($('input[name=chk-tipo]:checked'), function (index, elem) { tipo.push($(elem).val()); });
+						window.open($apiUrl+'asistencia/getPDFLista/'+tipo.toString()+'/'+$('#fecha').val());
+						e.preventDefault();
+					<?php endif; ?>
+
+					<?php if(in_array(MOD_ASIST_IMPRIMIR, $permisos)==false):?>
+						window.location.reload();
+					<?php endif; ?>
+				}
+			});
+		});
+	</script>

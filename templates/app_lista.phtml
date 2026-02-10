@@ -1,0 +1,79 @@
+<?php 
+	include 'header.phtml';
+
+	$arrDia = array('','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado');
+    $arrMes = array('','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre');
+
+    $strFechaInicio = $arrDia[date('w', strtotime($fechaInicio))]." ".substr($fechaInicio, 8,10)." de ".$arrMes[date('n', strtotime($fechaInicio))];
+	$strFechaFin = $arrDia[date('w', strtotime($fechaFin))]." ".substr($fechaFin, 8,10)." de ".$arrMes[date('n', strtotime($fechaFin))];
+?>
+	<div class="row page-titles">
+		<div class="col-md-6 align-self-center">
+			<h3 class="text-themecolor"><i class="mdi mdi-playlist-check fa-lg"></i> <strong>Lista de Asistencia APP</strong> <?= $strFechaInicio ?> al <?= $strFechaFin ?></h3>
+		</div>	
+		<div class="col-md-6 text-right">
+		<button class="btn btn-sm btn-secondary m-l-10" id="btnPrint"><i class="mdi mdi-printer fa-lg"></i> Imprimir</button>
+		</div>
+	</div>
+	<div class="container-fluid">
+		<div class="row justify-content-center">
+			<div class="col-6">
+				<div class="card" id="info">
+					<div class="card-body text-center">
+						<?php 
+							if($tipo == 1) echo 'El usuario '.$usuario.' capturó <strong class="text-dark">'.count($lista).' asistencias</strong>.';
+							else if($tipo == 2) echo count($lista).' titulares en lista. <strong class="text-dark"><span class="num-asist"></span> asistencias</strong>, <span class="num-faltas"></span> faltas';
+						?>
+						<hr>
+						<table id="tbl-lista" class="table table-sm table-striped table-hover">
+							<thead>
+								<tr>
+									<th class="text-left">Credencial</th>
+									<th>Nombre</th>
+									<th>Lista</th>
+									<th>Fecha</th>
+									<th>Faltas</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php $asist = 0; foreach ($lista as $item) : if(isset($item->hora)) $asist++; ?>
+								<tr>
+									<td><?= $item->credencial ?></td>
+									<td><?= $item->nombre ?></td>
+									<td><?= $item->lista ?></td>
+									<td><?= isset($item->hora) ? $item->hora : '--' ?></td>
+									<td><?= $item->faltas ?></td>
+									<td><?= isset($item->hora) ? '<i class="mdi mdi-check-circle text-success"></i>' : '<i class="mdi mdi-close-circle text-danger"></i>' ?></td>
+								</tr>
+								<?php endforeach; $faltas = count($lista) - $asist; ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?php include 'footer.phtml';?>
+	<script type="text/javascript">
+		$(function() {
+			$('#mnu-asist').addClass('active');
+			$apiUrl = '<?= URL_API ?>';
+
+			$('.num-asist').html('<?= $asist ?>');
+			$('.num-faltas').html('<?= $faltas ?>');
+
+			$('#btnPrint').click(function(){
+				if( <?php echo $tipo;?> == 1) window.open(' <?= URL_ROOT ?>/app/listaAsistUsu/1/<?php echo $id;?>/<?php echo $fechaInicio;?>/<?php echo $fechaFin;?>');
+				else if( <?php echo $tipo;?> == 2) window.open('<?= URL_ROOT ?>/app/listaAsistList/2/<?php echo $id;?>/<?php echo $fechaInicio;?>/<?php echo $fechaFin;?>');
+			});
+
+			$('body').on("keydown", function(e) { 
+				if (e.ctrlKey && e.which === 80) { // ctrl+P
+					if( <?php echo $tipo;?> == 1) window.open('<?= URL_ROOT ?>/app/listaAsistUsu/1/<?php echo $id;?>/<?php echo $fechaInicio;?>/<?php echo $fechaFin;?>');
+					else if( <?php echo $tipo;?> == 2) window.open('<?= URL_ROOT ?>/app/listaAsistList/2/<?php echo $id;?>/<?php echo $fechaInicio;?>/<?php echo $fechaFin;?>');
+					e.preventDefault();
+				}
+			});
+		});
+	</script>

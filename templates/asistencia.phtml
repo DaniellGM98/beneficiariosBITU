@@ -1,0 +1,156 @@
+<?php 
+	include 'header.phtml';
+
+	$arrDia = array('','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado');
+    $arrMes = array('','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre');
+
+    $strFecha = $arrDia[date('w')].", ".date('d')." de ".$arrMes[date('n')];
+?>
+	<div class="row page-titles">
+		<div class="col-md-5 align-self-center">
+			<h3 class="text-themecolor"><i class="mdi mdi-account-check fa-lg"></i> <strong>Pasar Asistencia</strong> <?= $strFecha ?></h3>
+		</div>
+		<div class="col-md-7 text-right">
+		<?php if(in_array(MOD_ASIST_LISTA, $permisos)):?>
+			<a href="<?= URL_ROOT ?>/lista" class="btn btn-sm btn-secondary" target="_blank"><i class="mdi mdi-playlist-check"></i> Lista Asistencia</a>
+		<?php endif; ?>
+		<?php if(in_array(MOD_ASIST_LISTACOM, $permisos)):?>
+			<a href="<?= URL_ROOT ?>/listacom" class="btn btn-sm btn-secondary" target="_blank"><i class="mdi mdi-hexagon-multiple"></i> Lista Comunidad</a>
+		<?php endif; ?>
+		</div>
+	</div>
+	<div class="container-fluid">
+		<div class="row justify-content-center">
+			<div class="col-5">
+				<div class="card">
+					<div class="card-body text-center">
+						<!-- <img src="<?= URL_ROOT ?>/assets/images/logo.png" > -->
+						<h3 id="observ"></h3>
+						<hr>
+						<div class="form-group row mb-0">
+							<label for="asist-cred" class="col-form-label col-form-label-lg col-sm-3 text-right">Credencial</label>
+							<div class="col-sm-8">
+								<div class="input-group input-group-lg">
+									<input class="form-control" type="text" id="asist-cred" placeholder="Credencial" <?= in_array(MOD_ASIST_PASAR, $permisos)?'':'disabled' ?> >
+									<div class="input-group-append"><span class="input-group-text"><i class="mdi mdi-magnify"></i></span></div>
+								</div>
+							</div>
+							<span class="save" id="segundero" style="margin-top: 15px; margin-right: 10px; font-size: smaller; font-weight: normal;"></span>
+						</div>
+					</div>
+				</div>
+
+				<div class="card" id="info">
+					<div class="card-body text-center">
+						<h2 class="display-6" id="asist-nombre">Hola</h2>					
+						<hr>
+						<div id="imgTit">
+							<img src="<?= URL_ROOT ?>/assets/images/BITU transparente.png" class="img-thumbnail" style="width:200px; height:auto;">
+							<hr>
+						</div>
+						<div id="res">
+							<strong>BIENVENIDA</strong><br>
+							<strong>Ultima Visita</strong><br>
+							<strong>Ultima Falta</strong><br>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?php include 'footer.phtml';?>
+	<script type="text/javascript">
+		$(function() {
+			$('#mnu-asist').addClass('active');
+			$apiUrl = '<?= URL_API ?>';
+			
+			limpia();
+
+			<?php if(in_array(MOD_ASIST_PASAR, $permisos)):?>
+			$('#asist-cred').change(function(event) { event.preventDefault();  buscar(); });
+            $("#frm-asist").submit(function(event){ event.preventDefault(); }); 
+
+            var timer;
+            function buscar(){
+                cred = $.trim($('#asist-cred').val());
+                if(cred.length > 10){
+                    clearTimeout(timer);
+                    clearInterval(segundos);
+                    $('#imgTit img').attr('src', '');
+                    $('#imgTit').slideUp();
+					$('#asist-cred').removeClass('is-valid').removeClass('is-invalid');
+					$('#asist-nombre').removeClass('is-valid').removeClass('is-invalid');
+                    $.post($apiUrl+'/asistencia/pasarLista/'+cred, {cred: cred}, function(resp) {
+						$('#info').slideDown();
+                        if(resp.found){
+                            if(!resp.error){
+								$('#asist-cred').addClass('is-valid');
+                                $('#asist-nombre').html(resp.nombre).addClass('text-success').slideDown();
+
+                                if(resp.foto != ''){
+                                    $('#imgTit img').attr('src', '<?= URL_ROOT ?>/'+resp.foto+'?'+Math.random());
+                                    $('#imgTit').slideDown();
+                                }
+
+                                $('#res').empty().append('<strong>BIENVENIDA</strong><br>');
+                                if(resp.visita != '00/00/0000') $('#res').append('<strong>Última Visita</strong>: '+resp.visita+'<br>');
+                                if(resp.falta != '00/00/0000') $('#res').append('<strong>Última Falta</strong>: '+resp.falta+'<br>');
+                                if(resp.faltas > 0) $('#res').append('<strong>'+resp.faltas+'</strong> Faltas<br>');
+                                if(resp.obs != ''){ 
+									// $('#res').append('<strong>Observaciones: </strong> <h4><strong>'+resp.obs+'</strong></h4>');
+									$('#observ').html('Observaciones: '+resp.obs).slideDown();
+								}
+                                $('#res').slideDown();
+                            }else{
+								$('#asist-cred').addClass('is-invalid');
+                                if(resp.baja){
+									$('#asist-nombre').addClass('text-danger');
+                                    $('#asist-nombre').html(resp.nombre).slideDown();
+                                    $('#res').empty().append('<strong>ESTATUS BAJA</strong><br>');
+                                    if(resp.faltas > 0) $('#res').append('<strong>'+resp.faltas+'</strong> Faltas<br>');
+                                    if(resp.obs != '') {
+										$('#observ').html('Observaciones: '+resp.obs).slideDown();
+										// $('#res').append('<strong>Observaciones: </strong> <h4><strong>'+resp.obs+'</strong></h4>');
+									}
+                                    $('#res').slideDown();
+                                }else{
+									$('#asist-nombre').addClass('text-warning');
+                                    $('#asist-nombre').html(resp.msg).slideDown();
+                                }
+                            }
+                        }else{
+							$('#asist-cred').addClass('is-invalid');
+							$('#asist-nombre').addClass('text-danger');
+                            $('#asist-nombre').html('No existe Beneficiario').slideDown();
+                        }
+                        initTimer();
+                        timer = setTimeout(function(){ limpia(); }, 5000);
+                    },'json');
+                }
+            }
+
+			var segundos;
+			function initTimer(){
+				$('#segundero').html('5');
+				segundos = setInterval(function(){
+						seg = parseInt($('#segundero').html(),10);
+						seg--;
+						if(seg == 0){ $('#segundero').html(''); clearInterval(segundos); }
+						else $('#segundero').html(seg);
+					}, 1000);
+			}
+
+			<?php endif; ?>
+
+			function limpia(){
+				$('#asist-cred').val('').removeClass('is-valid').removeClass('is-invalid');
+				$('#imgTit img').attr('src', '');
+				$('#asist-nombre').slideUp().removeClass('text-success').removeClass('text-danger').removeClass('text-warning');
+				$('#imgTit').slideUp();
+				$('#info').slideUp();
+				$('#res').slideUp();
+				$('#observ').slideUp();
+				$('#asist-cred').focus();
+			}
+		});
+	</script>

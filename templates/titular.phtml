@@ -1,0 +1,3528 @@
+<?php 
+	include 'header.phtml';
+
+	$visita = array('','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado');
+	$civil = array('','Soltero', 'Casado', 'Divorciado', 'Viudo', 'Unión Libre', 'Separado', 'Madre Soltera');
+	$escuela = array('No Aplica', 'Analfabeto', 'Alfabeto', 'Preescolar', 'Primaria', 'Secundaria', 'Preparatoria', 'Carrera técnica con primaria completa', 'Carrera técnica con secundaria completa', 'Carrera técnica con preparatoria completa', 'Licenciatura');
+	$otro = array('Otros', 'Prospera', 'Despensa', 'Ninguno','Pensión Alimenticia','Pensión Gobierno','Remesa');
+	
+?>
+	<link href="<?= URL_ROOT ?>/assets/plugins/wizard/steps.css" rel="stylesheet">
+	<div class="row page-titles">
+		<div class="col-md-5 align-self-center">
+			<h3 class="text-themecolor">
+				<i class="mdi mdi-contacts"></i> 
+				<?= $info->credencial.' <small class="text-info">'.$info->nombre.' '.$info->apaterno.' '.$info->amaterno.'</small>' ?> 
+				<span data-toggle="tooltip" title="Modificar datos" id="btnEditTitular"><a href="#" class="text-muted" data-toggle="modal" data-target="#frm-item"><i class="mdi mdi-account-edit"></i></a></span> 
+
+				<a id="btnChangePhoto" href="#" class="text-muted" data-toggle="tooltip" title="Cambiar foto"><i class="mdi mdi-camera"></i></a>
+
+			</h3>
+		</div>
+		<div class="col-md-7 text-right">
+			<button class="btn btn-secondary hide" id="btnFirma" data-toggle="modal" data-target="#frm-acuerdo"><i class="mdi mdi-fingerprint"></i> Acuerdo</button> 
+			<button class="btn btn-secondary" id="btnNutri"><i class="mdi mdi-food-apple"></i> Nutrición</button> 
+			<button class="btn btn-info" id="btnFicha"><i class="mdi mdi-account-card-details"></i> Ficha Técnica</button>
+		</div>
+	</div>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-4">
+				<div class="card">
+					<div class="card-body">
+						<table class="table-sm" id="info-titular">
+							<tbody>
+								<!-- <tr><th class="text-right"><small>Titular</small></th><th><?= $info->nombre.' '.$info->apaterno.' '.$info->amaterno ?></th></tr> -->
+								<tr><th class="text-right"><small>Domicilio</small></th><td><small><?= $info->domicilio.' '.$info->colonia.' '.$info->fk_municipio ?></small></td></tr>
+								<tr><th class="text-right"><small>Télefono</small></th><td><small><?= $info->numero_telefono ?></small></td></tr>
+								<tr><th class="text-right"><small>Fecha Nacimiento</small></th><td><?= date('d/m/Y',strtotime($info->fecha_nacimiento)).' <small>('.$info->edad.' años)</small>' ?></td></tr>
+								<tr><th class="text-right"><small>Estado Civil</small></th><td><?= $civil[$info->estado_civil] ?></td></tr>
+								<tr><th class="text-right"><small>Padecimientos</small></th><td><?= $info->padecimiento ?></td></tr>
+								<tr><th class="text-right"><small>Escolaridad</small></th><td><?= $escuela[$info->escolaridad] ?></td></tr>
+								<tr><th class="text-right"><small>Ocupación</small></th><td><?= $info->ocupacion.' <small>(Ingreso: $ '.number_format($info->ingreso,2).')</small>' ?></td></tr>
+								<tr><th class="text-right"><small>Otro Apoyo</small></th><td><?= $otro[$info->otro_apoyo].($info->otro_apoyo < 3 ? '<small>(Ingreso $ '.number_format($info->ingreso_otro_apoyo,2).')</small>': '') ?></td></tr>
+								<tr><th class="text-right"><small>Fecha Solicitud</small></th><td><?= date('d/m/Y',strtotime($info->fecha_solicitud)) ?></td></tr>
+								<tr><th class="text-right"><small>Fecha Visita</small></th><td><?= $visita[$info->fecha_visita] ?></td></tr>
+								<tr><th class="text-right"><small>Fecha Ingreso</small></th><td><?= date('d/m/Y',strtotime($info->fecha_ingreso)) ?></td></tr>
+								<tr>
+									<th class="text-right"><small>Fecha Consulta</small></th>
+									<td data-id="tr-info"><?= $info->fecha_consulta==null ? "--" : date('d/m/Y H:i:s',strtotime($info->fecha_consulta)) ?></td>
+								</tr>
+								<tr><th class="text-right"><small>Actualización</small></th><td><?= date('d/m/Y H:i:s',strtotime($info->fecha_actualizacion)) ?></td></tr>
+								<tr><th class="text-right"><small>Firma Consentimiento</small></th><td><?= is_object($info->firma) ? date('d/m/Y H:i:s',strtotime($info->firma->fecha)) : '--' ?></td></tr>
+								<tr><th class="text-right"><small>Status</small></th><td><?= $info->estatus == 1 ? 'Activo' : 'Baja ('.date('d/m/Y',strtotime($info->fecha_baja)).')' ?></td></tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-8">
+				<div class="card">
+					<div class="card-body wizard-content">
+						<form action="#" id="tit-wizard" class="vertical wizard-circle">
+							<h6>Alimentos</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-4">
+										<div class="form-group">
+											<br>
+											<label for="gasto-huevo">Huevo:</label>
+											<select class="custom-select form-control" id="gasto-huevo">
+												<option value=7 <?= ($gastos==""? '' : $gastos->huevo == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->huevo == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->huevo == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->huevo == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->huevo == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->huevo == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->huevo == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->huevo == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+										<label for="gasto-proteina_animal">Proteína animal (pollo, pescado, res):</label>
+											<select class="custom-select form-control" id="gasto-proteina_animal">
+												<option value=7 <?= ($gastos==""? '' : $gastos->proteina_animal == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->proteina_animal == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->proteina_animal == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->proteina_animal == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->proteina_animal == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->proteina_animal == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->proteina_animal == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->proteina_animal == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-carbohidratos">Carbohidratos (pan, tortillas, papa):</label>
+											<select class="custom-select form-control" id="gasto-carbohidratos">
+												<option value=7 <?= ($gastos==""? '' : $gastos->carbohidratos == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->carbohidratos == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->carbohidratos == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->carbohidratos == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->carbohidratos == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->carbohidratos == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->carbohidratos == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->carbohidratos == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-basicos">Básicos (arroz, frijol, avena, sopas):</label>
+											<select class="custom-select form-control" id="gasto-basicos">
+												<option value=7 <?= ($gastos==""? '' : $gastos->basicos == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->basicos == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->basicos == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->basicos == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->basicos == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->basicos == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->basicos == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->basicos == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-azucares">Azúcares (refinada, cereal, miel, mermelada):</label>
+											<select class="custom-select form-control" id="gasto-azucares">
+												<option value=7 <?= ($gastos==""? '' : $gastos->azucares == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->azucares == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->azucares == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->azucares == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->azucares == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->azucares == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->azucares == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->azucares == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-lacteos">Lácteos (leche, yogurt, queso, crema):</label>
+											<select class="custom-select form-control" id="gasto-lacteos">
+												<option value=7 <?= ($gastos==""? '' : $gastos->lacteos == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->lacteos == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->lacteos == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->lacteos == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->lacteos == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->lacteos == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->lacteos == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->lacteos == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="gasto-aceites_grasas">Aceites grasas (mantequilla, manteca, aceite vegetal, mayonesa):</label>
+											<select class="custom-select form-control" id="gasto-aceites_grasas">
+												<option value=7 <?= ($gastos==""? '' : $gastos->aceites_grasas == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->aceites_grasas == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->aceites_grasas == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->aceites_grasas == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->aceites_grasas == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->aceites_grasas == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->aceites_grasas == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->aceites_grasas == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<br>
+											<label for="gasto-fruta_verdura">Fruta y Verdura:</label>
+											<select class="custom-select form-control" id="gasto-fruta_verdura">
+												<option value=7 <?= ($gastos==""? '' : $gastos->fruta_verdura == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->fruta_verdura == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->fruta_verdura == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->fruta_verdura == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->fruta_verdura == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->fruta_verdura == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->fruta_verdura == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->fruta_verdura == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<label for="gasto-comida_fuera">Comida fuera de casa (antojitos, tamales, pizza, tacos):</label>
+											<select class="custom-select form-control" id="gasto-comida_fuera">
+												<option value=7 <?= ($gastos==""? '' : $gastos->comida_fuera == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->comida_fuera == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->comida_fuera == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->comida_fuera == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->comida_fuera == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->comida_fuera == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->comida_fuera == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->comida_fuera == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="gasto-comida_comprada">Comida comprada (pollo rostizado, comida preparada):</label>
+											<select class="custom-select form-control" id="gasto-comida_comprada">
+												<option value=7 <?= ($gastos==""? '' : $gastos->comida_comprada == "7") ? 'selected' : '' ?>>Ninguno</option>
+												<option value=6 <?= ($gastos==""? '' : $gastos->comida_comprada == "6") ? 'selected' : '' ?>>1 día</option>
+												<option value=5 <?= ($gastos==""? '' : $gastos->comida_comprada == "5") ? 'selected' : '' ?>>2 días</option>
+												<option value=4 <?= ($gastos==""? '' : $gastos->comida_comprada == "4") ? 'selected' : '' ?>>3 días</option>
+												<option value=3 <?= ($gastos==""? '' : $gastos->comida_comprada == "3") ? 'selected' : '' ?>>4 días</option>
+												<option value=2 <?= ($gastos==""? '' : $gastos->comida_comprada == "2") ? 'selected' : '' ?>>5 días</option>
+												<option value=1 <?= ($gastos==""? '' : $gastos->comida_comprada == "1") ? 'selected' : '' ?>>6 días</option>
+												<option value=0 <?= ($gastos==""? '' : $gastos->comida_comprada == "0") ? 'selected' : '' ?>>7 días</option>
+											</select>
+										</div>
+									</div>
+									<input type="hidden" id="gasto-id" value="<?= $gastos==""?0:$gastos->id_egresos ?>">
+								</div>
+
+
+
+								<!-- <div class="row">
+								<div class="col-md-4">
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-alimentacion">Alimentación:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-alimentacion" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->alimentacion),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-gas">Gas o combustible:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-gas" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->gas),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-renta">Renta:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-renta" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->renta),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-agua">Agua:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-agua" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->agua),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-luz">Luz:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-luz" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->luz),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-ropa_calzado">Ropa y Calzado:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-ropa_calzado" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->ropa_calzado),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-transporte">Transporte:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-transporte" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->transporte),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-abonos">Abonos o Créditos:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-abonos" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->abonos),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-fondo_ahorro">Fondos de Ahorro:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-fondo_ahorro" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->fondo_ahorro),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-credito_vivienda">Crédito de Vivienda:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-credito_vivienda" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->credito_vivienda),2,'.','') ?>">
+											</div>
+											<input type="hidden" id="gasto-id" value="<?= $gastos==""?0:$gastos->id_egresos ?>">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-medicamento">Medicamento:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-medicamento" placeholder="Numérico, mensual" value="<?= number_format(floatval($gastos==""?0:$gastos->medicamento),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<br><br><br><br><br><br><br>
+								</div> -->
+							</section>
+							
+							<h6>Vivienda</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-zona">Zona:</label>
+											<select class="custom-select form-control" id="vivienda-zona">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->zona == 0) ? 'selected' : '' ?>>Seleccione</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->zona == 1) ? 'selected' : '' ?>>Rural</option>
+												<option value="2" <?= ($vivienda==""? '' : $vivienda->zona == 2) ? 'selected' : '' ?>>Semiurbana</option>
+												<option value="3" <?= ($vivienda==""? '' : $vivienda->zona == 3) ? 'selected' : '' ?>>Urbana</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-estatus">La casa es:</label>
+											<select class="custom-select form-control" id="vivienda-estatus">
+												<option value="-1">Seleccione</option>
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->estatus == 0) ? 'selected' : '' ?>>Propia</option>
+												<option value="2" <?= ($vivienda==""? '' : $vivienda->estatus == 2) ? 'selected' : '' ?>>Rentada</option>
+												<option value="3" <?= ($vivienda==""? '' : $vivienda->estatus == 3) ? 'selected' : '' ?>>Pagándose</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->estatus == 1) ? 'selected' : '' ?>>Prestada</option>
+												<option value="4" <?= ($vivienda==""? '' : $vivienda->estatus == 4) ? 'selected' : '' ?>>Asentamiento Irregular</option>
+												<option value="5" <?= ($vivienda==""? '' : $vivienda->estatus == 5) ? 'selected' : '' ?>>Otro</option>
+											</select>
+										</div>
+									</div>
+									<!-- <div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-tipo">Tipo:</label>
+											<select class="custom-select form-control" id="vivienda-tipo">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->tipo == 0) ? 'selected' : '' ?>>Seleccione</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->tipo == 1) ? 'selected' : '' ?>>Independiente</option>
+												<option value="2" <?= ($vivienda==""? '' : $vivienda->tipo == 2) ? 'selected' : '' ?>>U. habitacional</option>
+												<option value="3" <?= ($vivienda==""? '' : $vivienda->tipo == 3) ? 'selected' : '' ?>>Vecindad</option>
+												<option value="4" <?= ($vivienda==""? '' : $vivienda->tipo == 4) ? 'selected' : '' ?>>Anexo a casa</option>
+												<option value="5" <?= ($vivienda==""? '' : $vivienda->tipo == 5) ? 'selected' : '' ?>>Vivienda móvil</option>
+												<option value="6" <?= ($vivienda==""? '' : $vivienda->tipo == 6) ? 'selected' : '' ?>>Refugio</option>
+												<option value="7" <?= ($vivienda==""? '' : $vivienda->tipo == 7) ? 'selected' : '' ?>>Compartida</option>
+											</select>
+										</div>
+									</div> -->
+									<!-- <div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-paredes">Paredes:</label>
+											<select class="custom-select form-control" id="vivienda-paredes">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->paredes == 0) ? 'selected' : '' ?>>Seleccione</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->paredes == 1) ? 'selected' : '' ?>>Lámina metálica, asbesto</option>
+												<option value="2" <?= ($vivienda==""? '' : $vivienda->paredes == 2) ? 'selected' : '' ?>>Madera</option>
+												<option value="3" <?= ($vivienda==""? '' : $vivienda->paredes == 3) ? 'selected' : '' ?>>Adobe</option>
+												<option value="4" <?= ($vivienda==""? '' : $vivienda->paredes == 4) ? 'selected' : '' ?>>Ladrillo, tabique</option>
+												<option value="5" <?= ($vivienda==""? '' : $vivienda->paredes == 5) ? 'selected' : '' ?>>Desechos, cartón</option>
+												<option value="6" <?= ($vivienda==""? '' : $vivienda->paredes == 6) ? 'selected' : '' ?>>Carrizo, bambú</option>
+												<option value="7" <?= ($vivienda==""? '' : $vivienda->paredes == 7) ? 'selected' : '' ?>>Otros</option>
+											</select>
+										</div>
+									</div> -->
+								</div>
+								<div class="row">		
+									<!-- <div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-techo">Techo:</label>
+											<select class="custom-select form-control" id="vivienda-techo">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->techo == 0) ? 'selected' : '' ?>>Seleccione</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->techo == 1) ? 'selected' : '' ?>>Concreto, losa, viguetas</option>
+												<option value="2" <?= ($vivienda==""? '' : $vivienda->techo == 2) ? 'selected' : '' ?>>Lámina de cartón, desecho</option>
+												<option value="3" <?= ($vivienda==""? '' : $vivienda->techo == 3) ? 'selected' : '' ?>>Lámina asbesto, metálica</option>
+												<option value="4" <?= ($vivienda==""? '' : $vivienda->techo == 4) ? 'selected' : '' ?>>Madera, teja</option>
+												<option value="5" <?= ($vivienda==""? '' : $vivienda->techo == 5) ? 'selected' : '' ?>>Paja o palma</option>
+												<option value="6" <?= ($vivienda==""? '' : $vivienda->techo == 6) ? 'selected' : '' ?>>Otros</option>
+											</select>
+										</div>
+										<div class="form-group">
+											<label for="vivienda-piso">Piso:</label>
+											<select class="custom-select form-control" id="vivienda-piso">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->piso == 0) ? 'selected' : '' ?>>Seleccione</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->piso == 1) ? 'selected' : '' ?>>Madera, duela</option>
+												<option value="2" <?= ($vivienda==""? '' : $vivienda->piso == 2) ? 'selected' : '' ?>>Mosaico, vinil</option>
+												<option value="3" <?= ($vivienda==""? '' : $vivienda->piso == 3) ? 'selected' : '' ?>>Cemento o firme</option>
+												<option value="4" <?= ($vivienda==""? '' : $vivienda->piso == 4) ? 'selected' : '' ?>>Tierra</option>
+												<option value="5" <?= ($vivienda==""? '' : $vivienda->piso == 5) ? 'selected' : '' ?>>Otros</option>
+											</select>
+										</div>
+										<br>
+									</div> -->
+									<!-- <div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-electrodomesticos">En su casa tiene:</label>
+											<div class="c-inpuxts-stacked">
+												<div class="form-check form-check-inline">
+													<input type="checkbox" name="chk-electro" value="T" class="form-check-input" id="chkTv" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'T') !== false ? 'checked' : '' ?>>
+													<label class="form-check-label" for="chkTv">Televisión</label>
+												</div>
+												<div class="form-check form-check-inline">
+													<input type="checkbox" name="chk-electro" value="R" class="form-check-input" id="chkRef" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'R') !== false ? 'checked' : '' ?>>
+													<label class="form-check-label" for="chkRef">Refrigerador</label>
+												</div>
+												<div class="form-check form-check-inline">
+													<input type="checkbox" name="chk-electro" value="L" class="form-check-input" id="chkLav" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'L') !== false ? 'checked' : '' ?>>
+													<label class="form-check-label" for="chkLav">Lavadora</label>
+												</div>
+												<div class="form-check form-check-inline">
+													<input type="checkbox" name="chk-electro" value="M" class="form-check-input" id="chkMic" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'M') !== false ? 'checked' : '' ?>>
+													<label class="form-check-label" for="chkMic">Horno de microondas</label>
+												</div>
+												<div class="form-check form-check-inline">
+													<input type="checkbox" name="chk-electro" value="E" class="form-check-input" id="chkEst" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'E') !== false ? 'checked' : '' ?>>
+													<label class="form-check-label" for="chkEst">Estereo</label>
+												</div>
+												<div class="form-check form-check-inline">
+													<input type="checkbox" name="chk-electro" value="D" class="form-check-input" id="chkDvd" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'D') !== false ? 'checked' : '' ?>>
+													<label class="form-check-label" for="chkDvd">DVD</label>
+												</div>
+												<div class="form-check form-check-inline">
+													<input type="checkbox" name="chk-electro" value="F" class="form-check-input" id="chkEstu" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'F') !== false ? 'checked' : '' ?>>
+													<label class="form-check-label" for="chkEstu">Estufa</label>
+												</div>
+												<div class="form-check form-check-inline">
+													<input type="checkbox" name="chk-electro" value="C" class="form-check-input" id="chkComp" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'C') !== false ? 'checked' : '' ?>>
+													<label class="form-check-label" for="chkComp">Computadora</label>
+												</div>
+											</div>
+											<input type="text" class="form-control form-control-sm" id="vivienda-otro_electro" placeholder="Otro electrodomestico" value="<?= $vivienda==""?"":$vivienda->otro_electro ?>">
+										</div>
+									</div> -->
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-electrodomesticos">Electrodomésticos (TV, Refrigerador, Lavadora, Horno, Estufa) :</label>
+											<select class="custom-select form-control" id="vivienda-electrodomesticos">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->electrodomesticos == "0") ? 'selected' : '' ?>>No</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->electrodomesticos == "1") ? 'selected' : '' ?>>Si</option>
+											</select>
+										</div>
+										<br>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<br>
+											<label for="vivienda-agua">Servicios (Luz, Agua, Combustible) :</label>
+											<select class="custom-select form-control" id="vivienda-agua">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->agua == "0") ? 'selected' : '' ?>>No</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->agua == "1") ? 'selected' : '' ?>>Si</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-internet">Internet:</label>
+											<select class="custom-select form-control" id="vivienda-internet">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->internet == 0) ? 'selected' : '' ?>>No</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->internet == 1) ? 'selected' : '' ?>>Si</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="vivienda-tv">Servicio de Tv (Sky, Cable, Izzi):</label>
+											<select class="custom-select form-control" id="vivienda-tv">
+												<option value="0" <?= ($vivienda==""? '' : $vivienda->tv == 0) ? 'selected' : '' ?>>No</option>
+												<option value="1" <?= ($vivienda==""? '' : $vivienda->tv == 1) ? 'selected' : '' ?>>Si</option>
+											</select>
+										</div>
+										<input type="hidden" id="vivienda-id" value="<?= $vivienda==""?0:$vivienda->id_vivienda ?>">
+									</div>
+								</div>
+								<br><br><br><br><br><br>
+							</section>
+
+							<h6>Observaciones</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-vulnerabilidad">Vulnerabilidad:</label>
+											<select class="custom-select form-control" id="gasto-vulnerabilidad">											
+												<option value="0" <?= ($gastos==""? '' : $gastos->vulnerabilidad == 0) ? 'selected' : '' ?>>No</option>
+												<option value="1" <?= ($gastos==""? '' : $gastos->vulnerabilidad == 1) ? 'selected' : '' ?>>Si</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-estabilidad">Estabilidad:</label>
+											<select class="custom-select form-control" id="gasto-estabilidad">											
+												<option value="0" <?= ($gastos==""? '' : $gastos->estabilidad == 0) ? 'selected' : '' ?>>No</option>
+												<option value="1" <?= ($gastos==""? '' : $gastos->estabilidad == 1) ? 'selected' : '' ?>>Si</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-egre_medicamento">Egresos por medicamentos:</label>
+											<select class="custom-select form-control" id="gasto-egre_medicamento">											
+												<option value="0" <?= ($gastos==""? '' : $gastos->egre_medicamento == 0) ? 'selected' : '' ?>>Ninguno</option>
+												<option value="1" <?= ($gastos==""? '' : $gastos->egre_medicamento == 1) ? 'selected' : '' ?>>Más de $500</option>
+												<option value="2" <?= ($gastos==""? '' : $gastos->egre_medicamento == 2) ? 'selected' : '' ?>>Más de $1000</option>
+												<option value="3" <?= ($gastos==""? '' : $gastos->egre_medicamento == 3) ? 'selected' : '' ?>>Más de $2000</option>
+												<option value="4" <?= ($gastos==""? '' : $gastos->egre_medicamento == 4) ? 'selected' : '' ?>>Más de $3000</option>
+												<option value="5" <?= ($gastos==""? '' : $gastos->egre_medicamento == 5) ? 'selected' : '' ?>>Más de $5000</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-egre_educacion">Egresos por educación:</label>
+											<select class="custom-select form-control" id="gasto-egre_educacion">											
+												<option value="0" <?= ($gastos==""? '' : $gastos->egre_educacion == 0) ? 'selected' : '' ?>>Ninguno</option>
+												<option value="1" <?= ($gastos==""? '' : $gastos->egre_educacion == 1) ? 'selected' : '' ?>>Más de $100</option>
+												<option value="2" <?= ($gastos==""? '' : $gastos->egre_educacion == 2) ? 'selected' : '' ?>>Más de $500</option>
+												<option value="3" <?= ($gastos==""? '' : $gastos->egre_educacion == 3) ? 'selected' : '' ?>>Más de $1000</option>
+												<option value="4" <?= ($gastos==""? '' : $gastos->egre_educacion == 4) ? 'selected' : '' ?>>Más de $2000</option>
+												<option value="5" <?= ($gastos==""? '' : $gastos->egre_educacion == 5) ? 'selected' : '' ?>>Más de $5000</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="gasto-egre_transporte">Egresos por transporte:</label>
+											<select class="custom-select form-control" id="gasto-egre_transporte">											
+												<option value="0" <?= ($gastos==""? '' : $gastos->egre_transporte == 0) ? 'selected' : '' ?>>Ninguno</option>
+												<option value="1" <?= ($gastos==""? '' : $gastos->egre_transporte == 1) ? 'selected' : '' ?>>Más de $100</option>
+												<option value="2" <?= ($gastos==""? '' : $gastos->egre_transporte == 2) ? 'selected' : '' ?>>Más de $300</option>
+												<option value="3" <?= ($gastos==""? '' : $gastos->egre_transporte == 3) ? 'selected' : '' ?>>Más de $500</option>
+												<option value="4" <?= ($gastos==""? '' : $gastos->egre_transporte == 4) ? 'selected' : '' ?>>Más de $1000</option>
+												<option value="5" <?= ($gastos==""? '' : $gastos->egre_transporte == 5) ? 'selected' : '' ?>>Más de $1500</option>
+											</select>
+										</div>
+									</div>
+									<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+								</div>
+							</section>
+
+							<h6>Tickets</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="ticket-uno">Total ticket 1:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-ticket_uno" placeholder="Numérico" value="<?= number_format(floatval($gastos==""?"0.00":$gastos->ticket_uno),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+									</div>
+									<div class="col-md-4">
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="ticket-dos">Total ticket 2:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-ticket_dos" placeholder="Numérico" value="<?= number_format(floatval($gastos==""?"0.00":$gastos->ticket_dos),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+									</div>
+									<div class="col-md-4">
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="ticket-tres">Total ticket 3:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-ticket_tres" placeholder="Numérico" value="<?= number_format(floatval($gastos==""?"0.00":$gastos->ticket_tres),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+									</div>
+									<div class="col-md-4">
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="ticket-cuatro">Total ticket 4:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="gasto-ticket_cuatro" placeholder="Numérico" value="<?= number_format(floatval($gastos==""?"0.00":$gastos->ticket_cuatro),2,'.','') ?>">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+									</div>
+									<div class="col-md-4">
+									</div>
+									<br><br><br><br><br><br><br><br>
+								</div>
+							</section>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<?php if(in_array(MOD_BENE_EDIT, $permisos)): ?>
+		<div class="modal" id="frm-item">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h3 class="modal-title text-info"><i class="mdi mdi-account-card-details"></i> Modificar datos Beneficiario</h3>
+					</div>
+					<div class="modal-body wizard-content">
+						<form action="#" class="edit-wizard vertical wizard-circle">
+							<h6>General</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-fecha_solicitud">Fecha Solicitud:</label>
+											<input type="date" class="form-control" id="item-fecha_solicitud">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-tipo">Tipo Registro:</label>
+											<select class="custom-select form-control" id="item-tipo">
+												<option value="1">Beneficiario</option>
+												<option value="2">Voluntario</option>
+												<option value="3">Comunidad</option>
+												<!-- <option value="4">COVID-19</option> -->
+												<option value="5">Becado</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-nombre">Nombre (s):</label>
+											<input type="text" class="form-control" id="item-nombre" placeholder="Nombre del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-apaterno">Apellido Paterno:</label>
+											<input type="text" class="form-control" id="item-apaterno" placeholder="Apellido del titular">
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-amaterno">Apellido Materno:</label>
+											<input type="text" class="form-control" id="item-amaterno" placeholder="Apellido del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-fecha_nacimiento">Fecha Nacimiento:</label>
+											<input type="date" class="form-control" id="item-fecha_nacimiento">
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-curp">CURP:</label>
+											<input type="text" class="form-control" id="item-curp" maxlength="18" placeholder="Clave Única de Registro de Población">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-numero_telefono">Teléfono de contacto:</label>
+											<input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required class="form-control" id="item-numero_telefono" maxlength="10" placeholder="Teléfono de contacto">
+										</div>
+									</div>
+								</div>
+							</section>
+							
+							<h6>Domicilio</h6>
+							<section>
+								<!-- <div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-vialidad">Vialidad:</label>
+											<select class="custom-select form-control" id="item-vialidad">
+												<option value=""> Seleccione </option>
+												<option value="1" <?= $info->vialidad == 1 ? 'selected' : '' ?>>Ampliación</option>
+												<option value="2" <?= $info->vialidad == 2 ? 'selected' : '' ?>>Andador</option>
+												<option value="3" <?= $info->vialidad == 3 ? 'selected' : '' ?>>Avenida</option>
+												<option value="4" <?= $info->vialidad == 4 ? 'selected' : '' ?>>Boulevard</option>
+												<option value="5" <?= $info->vialidad == 5 ? 'selected' : '' ?>>Calle</option>
+												<option value="6" <?= $info->vialidad == 6 ? 'selected' : '' ?>>Callejón</option>
+												<option value="7" <?= $info->vialidad == 7 ? 'selected' : '' ?>>Calzada</option>
+												<option value="8" <?= $info->vialidad == 8 ? 'selected' : '' ?>>Cerrada</option>
+												<option value="9" <?= $info->vialidad == 9 ? 'selected' : '' ?>>Circuito</option>
+												<option value="10" <?= $info->vialidad == 10 ? 'selected' : '' ?>>Circunvalacion</option>
+												<option value="11" <?= $info->vialidad == 11 ? 'selected' : '' ?>>Continuacion</option>
+												<option value="12" <?= $info->vialidad == 12 ? 'selected' : '' ?>>Corredor</option>
+												<option value="13" <?= $info->vialidad == 13 ? 'selected' : '' ?>>Diagonal</option>
+												<option value="14" <?= $info->vialidad == 14 ? 'selected' : '' ?>>Eje Vial</option>
+												<option value="15" <?= $info->vialidad == 15 ? 'selected' : '' ?>>Pasaje</option>
+												<option value="16" <?= $info->vialidad == 16 ? 'selected' : '' ?>>Peatonal</option>
+												<option value="17" <?= $info->vialidad == 17 ? 'selected' : '' ?>>Periferico</option>
+												<option value="18" <?= $info->vialidad == 18 ? 'selected' : '' ?>>Privada</option>
+												<option value="19" <?= $info->vialidad == 19 ? 'selected' : '' ?>>Prolongación</option>
+												<option value="20" <?= $info->vialidad == 20 ? 'selected' : '' ?>>Retorno</option>
+												<option value="21" <?= $info->vialidad == 21 ? 'selected' : '' ?>>Viaducto</option>
+												<option value="22" <?= $info->vialidad == 22 ? 'selected' : '' ?>>Ninguno</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-asentamiento">Asentamiento:</label>
+											<select class="custom-select form-control" id="item-asentamiento">
+												<option value=""> Seleccione </option>
+												<option value="1">Aeropuerto</option>
+												<option value="2">Ampliación</option>
+												<option value="3">Barrio</option>
+												<option value="4">Cantón</option>
+												<option value="5">Ciudad</option>
+												<option value="6">Industrial</option>
+												<option value="7">Colonia</option>
+												<option value="8">Condominio</option>
+												<option value="9">Conjunto Hab</option>
+												<option value="10">Corredor Industrial</option>
+												<option value="11">Coto</option>
+												<option value="12">Cuartes</option>
+												<option value="13">Ejido</option>
+												<option value="14">Ex Hacienda</option>
+												<option value="15">Fracción</option>
+												<option value="16">Fraccionamiento</option>
+												<option value="17">Granja</option>
+												<option value="18">Hacienda</option>
+												<option value="19">Ingenio</option>
+												<option value="20">Manzana</option>
+												<option value="21">Paraje</option>
+												<option value="22">Parque Industrial</option>
+												<option value="23">Privada</option>
+												<option value="24">Prolongación</option>
+												<option value="25">Pueblo</option>
+												<option value="26">Puerto</option>
+												<option value="27">Ranchería</option>
+												<option value="28">Rancho</option>
+												<option value="29">Región</option>
+												<option value="30">Residencial</option>
+												<option value="31">Rinconada</option>
+												<option value="32">Sección</option>
+												<option value="33">Súpermanzana</option>
+												<option value="34">Unidad</option>
+												<option value="35">Unidad Hab.</option>
+												<option value="36">Villa</option>
+												<option value="37">Zona Federal</option>
+												<option value="38">Zona Industrial</option>
+												<option value="39">Zona Militar</option>
+												<option value="40">Zona Naval</option>
+												<option value="41">Ninguno</option>
+											</select>
+										</div>
+									</div>
+								</div> -->
+								<div class="row">
+									<div class="col-md-12">
+										<div class="form-group">
+											<label for="item-domicilio">Calle y Num:</label>
+											<input type="text" class="form-control" id="item-domicilio">
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<!-- <label for="item-colonia">Localidad:</label> -->
+											<label for="item-colonia">Colonia:</label>
+											<input type="text" class="form-control" id="item-colonia">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="domi-fk_municipio">Municipio:</label>
+											<select class="custom-select form-control" id="item-fk_municipio">
+												<option value=""> Seleccione </option>
+												<?php
+													// $municipios = $todo->model->titular->getMunicipios();
+													foreach($municipios as $muni) echo '<option value="'.$muni->id_municipio.'">'.$muni->nombre.'</option>';
+												?>
+											</select>
+										</div>
+									</div>
+									<!-- <div class="col-md-4">
+										<div class="form-group">
+											<label for="item-gasto_baceh">Transporte para venir:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="item-gasto_baceh" placeholder="Gasto semanal">
+											</div>
+										</div>
+									</div> -->
+								</div>
+							</section>
+							
+							<h6>Otros Datos</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-sexo">Sexo:</label>
+											<select class="custom-select form-control" id="item-sexo">
+												<option value=""> Seleccione </option>
+												<option value="F">Femenino</option>
+												<option value="M">Masculino</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-estado_civil">Estado Civil:</label>
+											<select class="custom-select form-control" id="item-estado_civil">
+												<option value="1">Soltero</option>
+												<option value="2">Casado</option>
+												<option value="3">Divorciado</option>
+												<option value="4">Viudo</option>
+												<option value="5">Unión Libre</option>
+												<!--option value="6">Separado</option-->
+												<option value="7">Madre Soltera</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-escolaridad">Escolaridad:</label>
+											<select class="custom-select form-control" id="item-escolaridad">
+												<!-- <option value="0">No Aplica</option> -->
+												<option value="1">Analfabeto</option>
+												<!-- <option value="2">Alfabeto</option> -->
+												<option value="3">Preescolar</option>
+												<option value="4">Primaria</option>
+												<option value="5">Secundaria</option>
+												<option value="6">Preparatoria</option>
+												<option value="7">Carrera técnica con primaria completa</option>
+												<option value="8">Carrera técnica con secundaria completa</option>
+												<option value="9">Carrera técnica con preparatoria completa</option>
+												<option value="10">Licenciatura</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-padecimiento">Padecimiento:</label>
+											<select class="custom-select form-control" id="item-padecimiento">
+												<option value="NINGUNO">NINGUNO</option>
+												<option value="OBESIDAD">OBESIDAD</option>
+												<option value="DIABETES">DIABETES</option>
+												<option value="HIPERTENSIÓN">HIPERTENSIÓN</option>
+												<option value="ENF. CARDIOVASCULARES">ENF. CARDIOVASCULARES</option>
+												<option value="DISLIPIDEMIAS">DISLIPIDEMIAS</option>
+												<option value="CÁNCER">CÁNCER</option>
+												<option value="ENF. HEMATOLÓGICAS">ENF. HEMATOLÓGICAS</option>
+												<option value="ENF. RENALES">ENF. RENALES</option>
+												<option value="MENTAL">MENTAL</option>
+												<option value="OTROS">OTROS</option>
+											</select>
+										</div>
+									</div>
+									<!-- <div class="col-md-6">
+										<div class="form-group">
+											<label for="item-sindrome">Síndrome:</label>
+											<select class="custom-select form-control" id="item-sindrome">
+												<option value="0">No Aplica</option>
+												<option value="2">Integrante</option>
+												<option value="3">Titular</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-discapacidad">Disc Psicomotriz:</label>
+											<select class="custom-select form-control" id="item-discapacidad">
+												<option value="0">No Aplica</option>
+												<option value="2">Integrante</option>
+												<option value="3">Titular</option>
+											</select>
+										</div>
+									</div> -->
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-telefono">Teléfono:</label>
+											<select class="custom-select form-control" id="item-telefono">
+												<option value="3">No Tiene</option>
+												<option value="4">No es suyo</option>
+												<option value="2">Fijo (de casa)</option>
+												<option value="1">Celular</option>
+												<option value="0">Ambos</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-tc">Tarjeta Depart:</label>
+											<select class="custom-select form-control" id="item-tc">
+												<option value="3">No Tiene</option>
+												<option value="0">Si Tiene</option>
+												<option value="4">Remesa</option>
+											</select>
+										</div>
+									</div>
+								</div>
+							</section>
+							
+							<h6>Ingresos</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-ocupacion">Ocupación:</label>
+											<input type="text" class="form-control" id="item-ocupacion" placeholder="Ocupación del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-tipo_ocupacion">Tipo de Ocupación:</label>
+											<select class="custom-select form-control" id="item-tipo_ocupacion">
+												<option value="12">Ninguno</option>
+												<option value="0">Estudiante</option>
+												<option value="1">Sin actividad por enfermedad</option>
+												<option value="2">Sin actividad por edad</option>
+												<option value="3">Jubilado</option>
+												<option value="4">Empleado</option>
+												<option value="5">Oficio</option>
+												<option value="6">Profesionista</option>
+												<option value="7">Obrero</option>
+												<option value="8">Ama de casa</option>
+												<option value="9">Servidor público</option>
+												<option value="10">Infantil</option>
+												<option value="11">Desempleado</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-tipo_empleo">Tipo de empleo:</label>
+											<select class="custom-select form-control" id="item-tipo_empleo">
+												<option value="2">No tiene</option>
+												<option value="4">Medio Tiempo</option>
+												<option value="5">Informal</option>
+												<option value="3">Temporal</option>
+												<option value="0">Permanente</option>
+												<option value="1">Propio Legal</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-ingreso">Ingreso:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="item-ingreso" placeholder="Numérico, mensual">
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<!-- <div class="row">
+										<div class="col-md-6">
+											<div class="form-group">
+												<label for="item-personas_depen">Personas que dependen:</label>
+												<input type="number" class="form-control" id="item-personas_depen" placeholder="Numérico">
+											</div>
+										</div>
+									</div> -->
+									<div class="col-md-6">
+											<div class="form-group">
+												<label for="item-aporte_gasto">Aporte para gasto (Total):</label>
+												<div class="input-group">
+													<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+													<input type="number" class="form-control text-right" id="item-aporte_gasto" placeholder="Numérico, mensual">
+												</div>
+											</div>
+									</div>
+									<div class="col-md-6">
+											<div class="form-group">
+												<label for="item-aporte_gasto_inte">Aporte para gasto / integrantes:</label>
+												<div class="input-group">
+													<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+													<input type="number" class="form-control text-right" id="item-aporte_gasto_inte" placeholder="Numérico, mensual" disabled>
+												</div>
+											</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-otro_apoyo">Otro Apoyo:</label>
+											<select class="custom-select form-control" id="item-otro_apoyo">
+												<option value="3">Ninguno</option>
+												<option value="2">Despensa</option>
+												<option value="1">Prospera</option>
+												<option value="6">Remesa</option>
+												<option value="4">Pensión Alimenticia</option>
+												<option value="5">Pensión Gobierno</option>
+												<option value="0">Otros</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-ingreso_otro_apoyo">Ingreso Otro Apoyo:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="item-ingreso_otro_apoyo" placeholder="Numérico, mensual">
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+								<div class="col-md-6">
+										<div class="form-group">
+											<div class="c-inputs-stacked">
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkSeguro" name="chk-seguro" class="custom-control-input"> <span class="custom-control-label ml-0">Seguro Social</span>
+												</label>
+											</div>
+										</div>
+									</div>
+								</div>
+							</section>
+							
+							<h6>Confirmar</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-credencial">Credencial:</label>
+											<input type="text" class="form-control" id="item-credencial">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-fecha_visita">Día Visita</label>
+											<select class="custom-select form-control" id="item-fecha_visita" name="location">
+												<option value="1">Lunes</option>
+												<option value="2">Martes</option>
+												<option value="3">Miercoles</option>
+												<option value="4">Jueves</option>
+												<option value="5">Viernes</option>
+												<option value="6">Sabado</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-lista">Lista:</label>
+											<input type="number" class="form-control" id="item-lista" placeholder="Número de Lista">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-actualizo">Actualizó</label>
+											<input type="text" class="form-control" id="item-actualizo" placeholder="Nombre de quien modifica el registro">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-folio_sigo">FOLIO SIGO</label>
+											<input type="text" class="form-control" id="item-folio_sigo" placeholder="FOLIO SIGO">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-observaciones_asist">Observaciones Asistencia</label>
+											<textarea name="decisions" id="item-observaciones_asist" rows="4" class="form-control" placeholder="Observaciones para asistencia"></textarea>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-observaciones">Observaciones</label>
+											<textarea name="decisions" id="item-observaciones" rows="4" class="form-control"></textarea>
+										</div>
+									</div>
+								</div>
+							</section>
+						</form>
+					</div>
+					<div class="modal-footer d-flex justify-content-end">
+							<button type="button" class="btn btn-inverse waves-effect waves-light" data-dismiss="modal">Cancelar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php endif; ?>
+
+		<div class="row">
+			<div class="col-12">
+				<div class="card">
+					<div class="card-body">
+						<div class="pull-right">
+							<?php if(in_array(MOD_BENE_INTE_ADD, $permisos)) : ?>
+							<button type="button" class="btn btn-sm btn-secondary" id="btnAdd"><i class="mdi mdi-account-plus"></i> Agregar integrante</button>
+							<?php endif; ?>
+						</div>
+						<h4 class="card-title">Estructura Familiar</h4>
+
+						<div class="table-responsive">
+							<table id="tbl-items" class="table table-hover table-striped table-sm">
+								<thead>
+									<tr>
+										<th>Nombre</th>
+										<th>Parentesco</th>
+										<th class="text-center">Edad</th>
+										<th class="text-center">Nacimiento</th>
+										<th class="text-center">Sexo</th>
+										<th>Escolaridad</th>
+										<th>Peso/IMC</th>
+										<th>Padecimiento</th>
+										<th class="text-center">Ingreso</th>
+										<th class="text-center">Acciones</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<?php if(in_array(MOD_BENE_INTE_ADD, $permisos) || in_array(MOD_BENE_INTE_EDIT, $permisos)) : ?>
+		<div class="modal" id="frm-inte">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h3 class="modal-title text-info"><i class="mdi mdi-account"></i> Datos del Integrante</h3>
+					</div>
+					<div class="modal-body wizard-content">
+						<form action="#" class="inte-wizard vertical wizard-circle">
+							<h6>General</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-parentesco">Parentesco:</label>
+											<select class="custom-select form-control" id="inte-parentesco">
+												<option value="">Seleccione</option>
+												<option value="CÓNYUGE">CÓNYUGE</option>
+												<option value="HIJO (A)">HIJO (A)</option>
+												<option value="NIETO (A)">NIETO (A)</option>
+												<option value="BISNIETO (A)">BISNIETO (A)</option>
+												<option value="PADRE">PADRE</option>
+												<option value="MADRE">MADRE</option>
+												<option value="SUEGRO (A)">SUEGRO (A)</option>
+												<option value="HERMANO (A)">HERMANO (A)</option>
+												<option value="CUNADO (A)">CUNADO (A)</option>
+												<option value="YERNO">YERNO</option>
+												<option value="NUERA">NUERA</option>
+												<option value="TIO (A)">TIO (A)</option>
+												<option value="PRIMO (A)">PRIMO (A)</option>
+												<option value="SOBRINO (A)">SOBRINO (A)</option>
+												<option value="ABUELO (A)">ABUELO (A)</option>
+												<option value="OTRO">OTRO</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-nombre">Nombre (s):</label>
+											<input type="text" class="form-control" id="inte-nombre" placeholder="Nombre del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-apaterno">Apellido Paterno:</label>
+											<input type="text" class="form-control" id="inte-apaterno" placeholder="Apellido del titular">
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-amaterno">Apellido Materno:</label>
+											<input type="text" class="form-control" id="inte-amaterno" placeholder="Apellido del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-fecha_nacimiento">Fecha Nacimiento:</label>
+											<input type="date" class="form-control" id="inte-fecha_nacimiento">
+										</div>
+									</div>
+								</div>
+							</section>
+							<h6>Otros Datos</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-sexo">Sexo:</label>
+											<select class="custom-select form-control" id="inte-sexo">
+												<option value=""> Seleccione </option>
+												<option value="F">Femenino</option>
+												<option value="M">Masculino</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-escolaridad">Escolaridad:</label>
+											<select class="custom-select form-control" id="inte-escolaridad">
+												<!-- <option value="0">No Aplica</option> -->
+												<option value="1">Analfabeto</option>
+												<!-- <option value="2">Alfabeto</option> -->
+												<option value="3">Preescolar</option>
+												<option value="4">Primaria</option>
+												<option value="5">Secundaria</option>
+												<option value="6">Preparatoria</option>
+												<option value="7">Carrera técnica con primaria completa</option>
+												<option value="8">Carrera técnica con secundaria completa</option>
+												<option value="9">Carrera técnica con preparatoria completa</option>
+												<option value="10">Licenciatura</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-ocupacion">Ocupación:</label>
+											<input type="text" class="form-control" id="inte-ocupacion" placeholder="Ocupación del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-tipo_ocupacion">Tipo de Ocupación:</label>
+											<select class="custom-select form-control" id="inte-tipo_ocupacion">
+												<option value="12">Ninguno</option>
+												<option value="0">Estudiante</option>
+												<option value="1">Sin actividad por enfermedad</option>
+												<option value="2">Sin actividad por edad</option>
+												<option value="3">Jubilado</option>
+												<option value="4">Empleado</option>
+												<option value="5">Oficio</option>
+												<option value="6">Profesionista</option>
+												<option value="7">Obrero</option>
+												<option value="8">Ama de casa</option>
+												<option value="9">Servidor público</option>
+												<option value="10">Infantil</option>
+												<option value="11">Desempleado</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-tipo_empleo">Tipo de empleo:</label>
+											<select class="custom-select form-control" id="inte-tipo_empleo">
+												<option value="2">No tiene</option>
+												<option value="4">Medio Tiempo</option>
+												<option value="5">Informal</option>
+												<option value="3">Temporal</option>
+												<option value="0">Permanente</option>
+												<option value="1">Propio Legal</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-ingreso">Ingreso:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="inte-ingreso" placeholder="Numérico, mensual">
+											</div>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-padecimiento">Padecimiento:</label>
+											<select class="custom-select form-control" id="inte-padecimiento">
+												<option value="NINGUNO">NINGUNO</option>
+												<option value="OBESIDAD">OBESIDAD</option>
+												<option value="DIABETES">DIABETES</option>
+												<option value="HIPERTENSIÓN">HIPERTENSIÓN</option>
+												<option value="ENF. CARDIOVASCULARES">ENF. CARDIOVASCULARES</option>
+												<option value="DISLIPIDEMIAS">DISLIPIDEMIAS</option>
+												<option value="CÁNCER">CÁNCER</option>
+												<option value="ENF. HEMATOLÓGICAS">ENF. HEMATOLÓGICAS</option>
+												<option value="ENF. RENALES">ENF. RENALES</option>
+												<option value="MENTAL">MENTAL</option>
+												<option value="OTROS">OTROS</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+									<div class="form-group">
+										<label for="inte-estado_civil">Estado Civil:</label>
+											<select class="custom-select form-control" id="inte-estado_civil">
+												<option value="1">Soltero</option>
+												<option value="2">Casado</option>
+												<option value="3">Divorciado</option>
+												<option value="4">Viudo</option>
+												<option value="5">Unión Libre</option>
+												<!--option value="6">Separado</option-->
+												<option value="7">Madre Soltera</option>
+											</select>
+										</div>
+									</div>
+								</div>
+							</section>
+							<!-- Step 5 -->
+							<h6>Registrar</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-curp">CURP:</label>
+											<input type="text" class="form-control" id="inte-curp" maxlength="18" placeholder="Clave Única de Registro de Población">
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<div class="form-group">
+											<span class="inte-add">
+												Se va a anexar a a la estructura familiar de <strong><?= $info->nombre.' '.$info->apaterno.' '.$info->amaterno ?></strong> (<strong><?= $info->credencial ?></strong>) como <strong></strong>.
+											</span>
+											<span class="inte-edit">¿Desea guardar los cambios para este integrante?</span>
+										</div>
+									</div>
+								</div>
+							</section>
+						</form>
+					</div>
+					<div class="modal-footer d-flex justify-content-end">
+						<input type="hidden" id="inte-id_integrante" value="0">
+						<button type="button" class="btn btn-inverse waves-effect waves-light" data-dismiss="modal">Cancelar</button>
+						<button type="button" class="btn btn-success waves-effect waves-light edit-inte" id="btnSaveInte">Guardar cambios</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php endif; ?>
+
+		<div class="modal" id="frm-nutri">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h3 class="modal-title text-info"><i class="mdi mdi-food-apple"></i> Información de Nutrición</h3>
+					</div>
+					<div class="modal-body wizard-content">
+						<form action="#" class="nutri-wizard wizard-circle">
+							<h6>General</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="nutri-fk_integrante">Integrante:</label>
+											<select class="custom-select form-control" id="nutri-fk_integrante">
+											</select>
+										</div>
+										<div class="form-group">
+											<label for="nutri-edad">Edad:</label>
+											<input type="text" class="form-control" id="nutri-edad" placeholder="Edad del integrante" readonly>
+										</div>
+										<div class="form-group">
+											<label for="nutri-sexo">Sexo:</label>
+											<input type="text" class="form-control" id="nutri-sexo" placeholder="Sexo del integrante" readonly>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="nutri-clinica">Evaluación clínica:</label>
+											<div class="c-inputs-stacked">
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkObes" name="chk-clinica" class="custom-control-input"> <span class="custom-control-label ml-0">Obesidad</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkDiab" name="chk-clinica" class="custom-control-input"> <span class="custom-control-label ml-0">Diabetes</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkHiper" name="chk-clinica" class="custom-control-input"> <span class="custom-control-label ml-0">Hipertensión</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkCardi" name="chk-clinica" class="custom-control-input"> <span class="custom-control-label ml-0">Enfermedades cardiovascular</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkDisli" name="chk-clinica" class="custom-control-input"> <span class="custom-control-label ml-0">Dislipidemias</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkCanc" name="chk-clinica" class="custom-control-input"> <span class="custom-control-label ml-0">Cáncer</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkHema" name="chk-clinica" class="custom-control-input"> <span class="custom-control-label ml-0">Enfermedades Hematológicas</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block">
+													<input type="checkbox" id="chkRena" name="chk-clinica" class="custom-control-input"> <span class="custom-control-label ml-0">Enfermedades Renales</span>
+												</label>
+											</div>
+											<input type="text" class="form-control form-control-sm" id="nutri-otro_clini" placeholder="Otro (especifique)">
+										</div>
+									</div>
+								</div>
+							</section>
+							
+							<h6>Antecedentes</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<label for="nutri-pato">Antecedentes patológicos:</label>
+											<div class="c-inputs-stacked">
+												<label class="inline custom-control custom-checkbox block">
+													<input type="checkbox" id="chkTrau" name="chk-pato" class="custom-control-input"> <span class="custom-control-label ml-0">Traumatismo</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block">
+													<input type="checkbox" id="chkCiru" name="chk-pato" class="custom-control-input"> <span class="custom-control-label ml-0">Cirugías</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block">
+													<input type="checkbox" id="chkGastr" name="chk-pato" class="custom-control-input"> <span class="custom-control-label ml-0">Prob. Gastrointestinales</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block">
+													<input type="checkbox" id="chkInto" name="chk-pato" class="custom-control-input"> <span class="custom-control-label ml-0">Intoleracia</span>
+												</label>
+												<label class="inline custom-control custom-checkbox block">
+													<input type="checkbox" id="chkInfec" name="chk-pato" class="custom-control-input"> <span class="custom-control-label ml-0">Enfermedades Infecciosas</span>
+												</label>
+											</div>
+											<input type="text" class="form-control form-control-sm" id="pato-otro" placeholder="Otras (especifique)">
+									</div>
+									<div class="col-md-6">
+										<div class="form- m-b-10">
+											<label for="nutri-escolaridad">Antecedentes NO Patológicos <br><small>(Edad Inicio, Cantidad, Frecuencia)</small></label>
+											<label for="inte-escolaridad">Tabaquismo:</label>
+											<div class="form-row">
+												<div class="col-4">
+													<input type="number" class="form-control form-control-sm" id="nutri-edadt" placeholder="Edad inicio">
+												</div>
+												<div class="col-4">
+													<input type="number" class="form-control form-control-sm" id="nutri-cantt" placeholder="Cantidad">
+												</div>
+												<div class="col-4">
+													<input type="text" class="form-control form-control-sm" id="nutri-frect" placeholder="Frecuencia">
+												</div>
+											</div>
+										</div>
+										<div class="form-group m-b-10">
+											<label for="nutri-escolaridad">Alcohol:</label>
+											<div class="form-row">
+												<div class="col-4">
+													<input type="number" class="form-control form-control-sm" id="nutri-edada" placeholder="Edad inicio">
+												</div>
+												<div class="col-4">
+													<input type="number" class="form-control form-control-sm" id="nutri-canta" placeholder="Cantidad">
+												</div>
+												<div class="col-4">
+													<input type="text" class="form-control form-control-sm" id="nutri-freca" placeholder="Frecuencia">
+												</div>
+											</div>
+										</div>
+										<div class="form-group">
+											<label for="nutri-escolaridad">Actividad Física:</label>
+											<div class="form-row">
+												<div class="col-4">
+													<input type="number" class="form-control form-control-sm" id="nutri-edadf" placeholder="Edad inicio">
+												</div>
+												<div class="col-4">
+													<input type="number" class="form-control form-control-sm" id="nutri-cantf" placeholder="Cantidad">
+												</div>
+												<div class="col-4">
+													<input type="text" class="form-control form-control-sm" id="nutri-frecf" placeholder="Frecuencia">
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</section>
+
+							<h6>Indicadores</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutro-glucosa">Glucosa:</label>
+											<input type="text" class="form-control" id="nutri-glucosa" placeholder="mg/dL">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-trigli">Trigliceridos:</label>
+											<input type="text" class="form-control" id="nutri-trigli" placeholder="mg/dL">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-coles">Colesterol total:</label>
+											<input type="text" class="form-control" id="nutri-coles" placeholder="mg/dL">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-presion">Presión arterial:</label>
+											<input type="text" class="form-control" id="nutri-presion" placeholder="mm Hg">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-urea">Urea:</label>
+											<input type="text" class="form-control" id="nutri-urea" placeholder="mg/dL">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-creati">Creatinina:</label>
+											<input type="text" class="form-control" id="nutri-creati" placeholder="mg/dL">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-hemo">Hemoglobina:</label>
+											<input type="text" class="form-control" id="nutri-hemo" placeholder="mg/dL">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-otro_indicador">Otros:</label>
+											<input type="text" class="form-control" id="nutri-otro_indicador" placeholder="Especifique">
+										</div>
+									</div>
+								</div>
+							</section>
+
+							<h6>Alimentación</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-sexo">Comidas al día:</label>
+											<input type="text" class="form-control" id="nutri-comi-dia" placeholder="Comidas al día">
+											<label class="inline custom-control custom-checkbox block">
+												<input id="come-mis-hora" type="checkbox" class="custom-control-input"> <span class="custom-control-label ml-0">Come a la misma hora diariamente</span>
+											</label>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-escolaridad">Donde come:</label>
+											<input type="text" class="form-control" id="comi-donde" placeholder="Donde come">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-ocupacion">Alergia o tolerancia:</label>
+											<input type="text" class="form-control" id="comi-alerg" placeholder="Alergia o Tolerancia">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="inte-ingreso">Observaciones:</label>
+											<textarea id="nutri-observaciones" rows="3" class="form-control"></textarea>
+										</div>
+									</div>
+								</div>
+							</section>
+							
+							<h6>Antropométrica</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-peso">Peso:</label>
+											<div class="input-group">
+												<input type="number" class="form-control text-right" id="nutri-peso" onkeypress='return event.charCode >= 48 && event.charCode <= 57' placeholder="Peso">
+												<div class="input-group-append"><span class="input-group-text">kg</span></div>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-talla">Talla:</label>
+											<div class="input-group">
+												<input type="number" class="form-control text-right" min="61.0" max="120.0" id="nutri-talla" onkeypress='return event.charCode >= 48 && event.charCode <= 57' placeholder="Talla" >
+												<div class="input-group-append"><span class="input-group-text">cm</span></div>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="form-group">
+											<label for="nutri-cintura">Cintura:</label>
+											<div class="input-group">
+												<input type="number" class="form-control text-right" id="nutri-cintura" placeholder="Cintura">
+												<div class="input-group-append"><span class="input-group-text">cm</span></div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<hr>
+								<div class="row">
+									<div class="col-md-12">
+										<div class="form-group">
+											<label for="nutri-imc">IMC:</label>
+											<input type="text" class="form-control text-right" id="nutriImc" readonly>
+										</div>
+									</div>
+								</div>
+							</section>
+
+							<h6>Historial</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="nutri-sel-hist">Indicador:</label>
+											<select class="custom-select form-control" id="nutri-sel-hist">
+												<option value="0">Selecciona</option>
+												<option value="1">Glucosa</option>
+												<option value="2">Trigliceridos</option>
+												<option value="3">Colesterol Total</option>
+												<option value="4">Presión Arterial</option>
+												<option value="5">Antropométricas</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<table class="table-hover table table-striped table-sm" id="tbl-indicadores">
+											<thead>
+												<tr><th>Fecha</th>
+												<th>Indicador</th></tr>
+											</thead>
+											<tbody>
+												<tr class="no-data">
+													<td><small>Seleccione un indicador</small></td>
+													<td></td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</section>
+						</form>
+					</div>
+					<div class="modal-footer d-flex justify-content-end">
+						<i class="mdi mdi-account fa-lg"></i> <strong class="p-r-20"></strong>
+						<?php if(in_array(MOD_BENE_NUTRI, $permisos)):?>
+						<button type="button" class="btn btn-info waves-effect waves-light" id="btnSaveNutri">Guardar cambios</button>
+						<?php endif;?>
+						<button type="button" class="btn btn-inverse waves-effect waves-light" data-dismiss="modal">Cancelar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<?php
+		$arrApo = array('Otros','Prospera','Despensa','Ninguno','Pensión Alimenticia','Pensión Gobierno','Remesa');
+		$apoyo = $arrApo[$info->otro_apoyo];
+
+		$adulto = $ficha->adulto_mayor == 0 ? 'No Aplica' : ($ficha->adulto_mayor == 2 ? 'Integrante' : 'Titular');
+		$sindrome = $ficha->sindrome == 0 ? 'No Aplica' : ($ficha->sindrome == 2 ? 'Integrante' : 'Titular');
+		$discap = $ficha->discapacidad == 0 ? 'No Aplica' : ($ficha->discapacidad == 2 ? 'Integrante' : 'Titular');
+		$arrEmp = array('Permanente','Propio Legal','No tiene','Temporal','Medio Tiempo','Informal');
+		$arrSeguro = array('No','Si');
+		$zona = '';
+		if(is_object($vivienda)){
+			$zona = $vivienda->zona == 1 ? 'Rural' : ($vivienda->zona == 2 ? 'Semi-Urbana' : 'Urbana');
+		}
+
+		$egresos = 0;
+		// if(is_object($gastos)){
+		// 	$egresos = floatval($gastos->alimentacion)+floatval($gastos->gas)+floatval($gastos->renta)+floatval($gastos->agua)+floatval($gastos->luz)+floatval($gastos->abonos)+floatval($gastos->ropa_calzado)+floatval($gastos->fondo_ahorro)+floatval($gastos->credito_vivienda)+floatval($gastos->transporte)+floatval($gastos->medicamento);
+		// }
+	?>
+	<div class="modal" id="frm-ficha">
+		<div class="modal-dialog modal-xl">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3 class="modal-title text-info"><i class="mdi mdi-account-card-details"></i> Resumen Socioeconómico</h3>
+					<button class="btn btn-secondary btn-sm" id="btnPDFFicha"><i class="mdi mdi-printer"></i> Imprimir</button>
+				</div>
+				<div class="modal-body" id="imprimir">
+					<div class="row print-titulo d-none">
+						<div class="col-sm-12">
+							<small class="pull-right"><?= date('Y-m-d H:i:s') ?></small>
+							<h3 class="display-6">Banco de Insumos Todos Unidos<small></small></h3>
+							<hr>
+					</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-3">
+							<div class="card border" style="height: 250px;">
+								<div class="card-body">
+									<h6 class="card-title text-center"><?= $info->credencial ?></h6>
+									<img id="foto_tit" src="<?= $foto.'?'.rand() ?>" alt="<?= $info->credencial ?>" class="img-thumbnail">
+								</div>
+							</div>
+							
+						</div>
+						<div class="col-sm-9">
+							<div class="row">
+								<div class="col-sm-6">
+										<div class="card border" style="min-height: 250px;">
+											<div class="card-body">
+												<table>
+													<tbody>
+														<tr><th><small>Nombre</small></th><th class="p-l-10"><?= $info->nombre.' '.$info->apaterno.' '.$info->amaterno ?></th></tr>
+														<tr><th><small>Credencial</small></th><th class="p-l-10"><?= $info->credencial ?></th></tr>
+														<tr><th><small>Dirección</small></th><td class="p-l-10"><small><?= $info->colonia.' '.$info->fk_municipio ?></small></td></tr>
+														<tr><th><small>Día visita</small></th><td class="p-l-10"><?= $visita[$info->fecha_visita] ?></td></tr>
+														<tr><th><small>Integrantes</small></th><td class="p-l-10 ficha-inte"></td></tr>
+														<tr><th><small>Bajas</small></th><td class="p-l-10"><?= $info->bajas ?></td></tr>
+														<tr><th><small>Faltas</small></th><td class="p-l-10"><?= $info->faltas ?></td></tr>
+													</tbody>
+												</table>
+										</div>
+									</div>
+								</div>
+								<div class="col-sm-6">
+									<div class="card border">
+										<div class="card-body">
+											<table id="fichaTecnicaActualizado">
+												<tbody>
+													<tr><th><small>CURP</small></th><th class="p-l-10"><?= $info->curp ?></th></tr>
+													<tr><th><small>Nivel nec</small></th><th class="p-l-10"><?= $nivel ?></th></tr>
+													<tr><th><small>Sexo</small></th><td class="p-l-10"><?= $info->sexo == 'M' ? 'Masculino' : 'Femenino' ?></td></tr>
+													<tr><th><small>Status</small></th><td class="p-l-10"><?= $info->tipo == '1' ? 'Beneficiario' : ($info->tipo == '3' ? 'Comunidad' : ($info->tipo == '4' ? 'COVID-19' : 'Voluntario')); ?></td></tr>
+													<tr><th><small>Apoyos</small></th><td class="p-l-10"><?= $apoyo ?></td></tr>
+													<tr><th><small>Consultado</small></th><td data-ultima="tr-info" class="p-l-10"><?= date('d/m/Y H:i:s',strtotime($ficha->ultima_consulta)) ?></td></tr>
+													<tr><th><small>Actualizado</small></th><td class="p-l-10"><?= date('d/m/Y H:i:s',strtotime($info->fecha_actualizacion)) ?></td></tr>
+													<tr><th><small>Actualizó</small></th><td class="p-l-10"><?= $info->actualizo ?></td></tr>
+												</tbody>
+											</table>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="card border">
+								<div class="card-body p-10">
+									<strong>Observaciones: </strong> <?= $info->observaciones ?>
+								</div>
+							</div>
+
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-sm-4">
+							<div class="card border">
+								<div class="card-body">
+									<table>
+										<tbody>
+											<tr><th><small>Cancer</small></th><td class="p-l-10"><?= $arrFicha['cancer'] ?></td></tr>
+											<tr><th><small>Obesidad</small></th><td class="p-l-10"><?= $arrFicha['obesidad'] ?> integrantes</td></tr>
+											<tr><th><small>Diabetes</small></th><td class="p-l-10"><?= $arrFicha['diabetes'] ?> integrantes</td></tr>
+											<tr><th><small>Hipertensión</small></th><td class="p-l-10"><?= $arrFicha['hiper'] ?> integrantes</td></tr>
+											<tr><th><small>Otras</small></th><td class="p-l-10"><?= $arrFicha['otras'] ?></td></tr>
+											<tr><th><small>Adulto Mayor</small></th><td class="p-l-10"><?= $adulto ?></td></tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+
+						</div>
+						<div class="col-sm-4">
+							<div class="card border">
+								<div class="card-body">
+									<table>
+										<tbody>
+											<tr><th colspan="2"><small>Capacidades Diferentes</small></th></tr>
+											<tr><th><small>Sindrome</small></th><td class="p-l-10"><?= $sindrome ?></td></tr>
+											<tr><th><small>Disc. Psicomotriz</small></th><td class="p-l-10"><?= $discap ?></td></tr>
+											<tr><th>&nbsp;</th><td class="p-l-10">&nbsp;</td></tr>
+											<tr><th><small>Empleo</small></th><td class="p-l-10"><?= $arrEmp[$ficha->tipo_empleo] ?></td></tr>
+											<tr><th><small>Seguro Social</small></th><td class="p-l-10"><?= $arrSeguro[$info->seguro_social] ?></td></tr>
+											<tr><th><small>Escolaridad</small></th><td class="p-l-10"><?= $escuela[$info->escolaridad] ?></td></tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+
+						</div>
+						<div class="col-sm-4">
+							<div class="card border">
+								<div class="card-body">
+									<table>
+										<tbody>
+											<tr><th><small>Zona Vivienda</small></th><td class="p-l-10"><?= $zona ?></td></tr>
+											<!-- <tr><th><small>Transporte para venir</small></th><td class="p-l-10">$ <?= number_format(floatval($ficha->transporte),2) ?></td></tr> -->
+											<tr><th><small>Participación BITU</small></th><td class="p-l-10">$ <?= number_format(floatval($info->gasto_baceh),2) ?></td></tr>
+											<tr><th>&nbsp;</th><td class="p-l-10">&nbsp;</td></tr>
+											<tr><th><small>Egresos Generales</small></th><td class="p-l-10">$ <?= number_format(floatval($egresos),2) ?></td></tr>
+											<tr><th><small>Ingresos Familiares</small></th><td class="p-l-10">$ <?= $ingresos ?></td></tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-inverse waves-effect waves-light" data-dismiss="modal">Cerrar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal" id="frm-Photo">
+		<div class="modal-dialog modal-md">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3 class="modal-title text-info"><i class="mdi mdi-camera"></i> Cambiar Foto</h3>
+				</div>
+				<div class="row">
+					<div class="col">
+					<div class="card">
+						<div class="card-body">
+							<h4 class="card-title">Foto de titular</h4>
+							<h6 class="card-subtitle">Modifica o elimina foto de titular</h6><hr>
+							<input type="file" id="bene-image" class="dropify" data-default-file="<?= $foto ?>" data-height="300" data-max-file-size="1M" data-min-width="500" data-max-width="1500" data-allowed-file-extensions="jpg jpeg png" accept=".jpg, .jpeg, .png" data-show-remove="false"/>
+							<br>
+							<span class="help-block text-muted"><small>Debe subir una imágen JPG cuadrada de mínimo 500x500 px y máximo 1MB.</small></span>
+							<!-- <hr> -->
+						</div>
+					</div>
+				</div>
+			</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-info waves-effect d-none" id="btnImgBene" data-dismiss="modal">Guardar cambios</button>
+					<button type="button" class="btn btn-inverse waves-effect waves-light" data-dismiss="modal">Cerrar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<style>
+        .progress {background-color: white; border-radius: 50%; position: absolute; width: 60vh; height: 60vh; left: 50vw; top: 50vh; transform: translateY(-50%) translateX(-50%);}
+        #capture {width: 40vh; height: 40vh; opacity: 0.1; transform: translateY(10vh) translateX(10vh);}
+        .containter {background: white;}
+        .instruction {text-align: center; margin-top: 5%;}
+        .button {position: relative; top: 65vh; text-align: center; border:none; outline:none; -moz-border-radius: 10px; -webkit-border-radius: 10px; border-radius: 10px; color: #ffffff; display: block; cursor:pointer; margin: 0px auto; clear:both; padding: 7px 25px; text-shadow: 0 1px 1px #777; font-weight:bold; font-family:"Century Gothic", Helvetica, sans-serif; font-size:22px; -moz-box-shadow:0px 0px 3px #aaa; -webkit-box-shadow:0px 0px 3px #aaa; box-shadow:0px 0px 3px #aaa; background:#4797ED; width: 120px;}
+        .button:hover {background:#d8d8d8; color:#666; text-shadow:1px 1px 1px #fff;}
+    </style>
+	<div class="modal" id="frm-acuerdo">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3 class="modal-title text-info"><i class="mdi mdi-fingerprint"></i> Acuerdo de consentimiento</h3>
+				</div>
+				<div class="modal-body">
+					<div class="msg text-center p-30">
+						<span class="display-6">
+							Se que mis datos serán confidenciales, entiendo en que consiste el apoyo, no tengo dudas.
+							<br><br>
+							Si necesito el apoyo.
+						</span>
+					</div>
+					<hr>
+					<div class="firmar">
+						<h1 class="instruction">Coloque su dedo indice en el lector</h1>
+						<div class="progress">
+							<img src="<?= URL_ROOT ?>/assets/images/fingerprint.png" id="capture">
+						</div>
+						<a id="btnBack" class="button" href="info.php?tit=" target="_top" style="text-decoration: none;">Regresar</a>
+						<a id="btnRestart" class="button" href="huella.php?tit=" style="text-decoration: none; display: none;">Reintentar</a>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-info waves-effect" id="btnFirma"><i class="mdi mdi-fingerprint"></i> Firmar</button>
+					<button type="button" class="btn btn-inverse waves-effect waves-light" data-dismiss="modal">Cerrar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<?php include 'footer.phtml';?>
+	<script src="<?= URL_ROOT ?>/assets/plugins/wizard/jquery.steps.min.js"></script>
+    <script src="<?= URL_ROOT ?>/assets/plugins/wizard/jquery.validate.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script type="text/javascript">
+		$(function() {
+			$('#mnu-bene').addClass('active');
+			$apiUrl = '<?= URL_API ?>';
+			$curp = true;
+			$curpInte = true;
+
+			$getNombreInte="";
+			$getPaternoInte="";
+			$getMaternoInte="";
+			$getCURPInte="";
+
+			$fecha_consulta = "<?= $info->fecha_consulta ?>";
+		
+			$("#tit-wizard").steps({
+				headerTag: "h6",
+				bodyTag: "section",
+				transitionEffect: "fade",
+				transitionEffectSpeed: 500,
+				titleTemplate: '<span class="step">#index#</span> #title#',
+				enableFinishButton: <?=in_array(MOD_BENE_EDIT, $permisos)?'true' :'false'?>,
+				labels: {
+					finish: "Guardar cambios", 
+					next: "Siguiente",
+					previous: "Anterior",
+				}, 
+				enableAllSteps: true,
+				/* onStepChanging: function (event, currentIndex, newIndex){
+					if(currentIndex == 0){
+						if($('#item-nombre').val() == '')
+					}
+					return true;
+				}, */
+				onFinished: function (event, currentIndex) {
+					event.preventDefault();
+					var form = $(this);
+					gastos = {fk_titular: '<?= $info->id_titular ?>'}; vivienda = {fk_titular: '<?= $info->id_titular ?>'};
+					$.each($('#tit-wizard input:not([type="checkbox"]), #tit-wizard select'), function (index, elem) { 
+						ide = $(elem).attr('id').replace('gasto-','');
+						if(ide.indexOf('vivienda-') == -1) gastos[ide] = $.trim($(elem).val());
+						else{
+							ide = ide.replace('vivienda-','');
+							vivienda[ide] = $.trim($(elem).val());
+						}
+					});
+					// electro = '';
+					// $.each($('input[name=chk-electro]:checked'), function (index, elem) { electro += $(elem).val(); });
+					// vivienda.electrodomesticos = electro;
+					vivienda.luz = 0;
+					vivienda.combustible = 0;
+					vivienda.streaming = 5;
+					vivienda.tipo = 0;
+					vivienda.paredes = 0;
+					vivienda.techo = 0;
+					vivienda.piso = 0;
+					blockPage();
+					$.ajax({
+						type: (gastos.id==0?'post':'put'),
+						url: $apiUrl+"egresos/"+(gastos.id==0?'add/':'edit/'+gastos.id),
+						data: gastos,
+						dataType: "json",
+						success: function (resp) {
+							if(resp.response){
+								$('#gasto-id').val(resp.result);
+								$.ajax({
+									type: (vivienda.id==0?'post':'put'),
+									url: $apiUrl+"vivienda/"+(vivienda.id==0?'add/':'edit/'+vivienda.id),
+									data: vivienda,
+									dataType: "json",
+									success: function (resp) {
+										if(resp.response){
+											$('#vivienda-id').val(resp.result);
+											swal({ type:"success", title:"Guardar cambios", text:'Se guardaron los datos correctamente', timer:3000 }, function () {
+											window.location.reload();
+											});
+										}else{
+											swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+										}
+										$.unblockUI();
+									}
+								});
+							}else{
+								swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+								$.unblockUI();
+							}
+						}
+					});
+				}
+			});
+
+			<?php if(in_array(MOD_BENE_EDIT, $permisos)): ?>
+			$(".edit-wizard").steps({
+				headerTag: "h6",
+				bodyTag: "section",
+				transitionEffect: "slide",
+				transitionEffectSpeed: 500,
+				// enableFinishButton: false,
+				titleTemplate: '<span class="step"><i class="mdi mdi-"></i>#index#</span> #title#',
+				labels: {
+					finish: "Guardar cambios", 
+					next: "Siguiente",
+					previous: "Anterior",
+				}, 
+				enableAllSteps: true,
+				/* onStepChanging: function (event, currentIndex, newIndex){
+					if(currentIndex == 0){
+						if($('#item-nombre').val() == '')
+					}
+					return true;
+				}, */
+				onFinished: function (event, currentIndex) {
+					event.preventDefault();
+					var form = $(this);
+					data = {};
+					$.each($('#frm-item input, #frm-item select'), function (index, elem) { 
+						ide = $(elem).attr('id').replace('item-','');
+						data[ide] = $.trim($(elem).val());
+					});
+					data.observaciones_asist = $.trim($('#item-observaciones_asist').val());
+					data.observaciones = $.trim($('#item-observaciones').val());
+					var seguro = 0;
+					if(document.getElementById("chkSeguro").checked==true){
+						seguro = 1;
+					}else{
+						seguro = 0;
+					}
+					data.seguro_social = seguro;
+					data.fecha_consulta = $fecha_consulta;
+
+					delete data.aporte_gasto_inte;
+					// console.log(data);
+
+					$nombre 	= document.getElementById('item-nombre').value;
+					$paterno 	= document.getElementById('item-apaterno').value;
+					$materno 	= document.getElementById('item-amaterno').value;
+					$curpValue 	= document.getElementById('item-curp').value;
+
+					if($nombre!="" && $paterno!="" && $materno!=""){
+						$('#item-nombre').removeClass('is-invalid');
+						$('#item-apaterno').removeClass('is-invalid');
+						$('#item-amaterno').removeClass('is-invalid');
+						if($curpValue!=""){
+							$('#item-curp').removeClass('is-invalid');
+
+							$.get($apiUrl+"integrante/findByNombre/"+$nombre+"/"+$paterno+"/"+$materno, 
+									function (resp) {
+										if(resp.response){
+												if($curp){
+													if($nombre == '<?= $info->nombre ?>' && $paterno == '<?= $info->apaterno ?>' && $materno == '<?= $info->amaterno ?>' && $curpValue == '<?= $info->curp ?>'){
+														$.ajax({
+															type: 'put',
+															url: $apiUrl+"titular/edit/<?= $info->id_titular ?>",
+															data: data,
+															dataType: "json",
+															success: function (resp) {
+																if(resp.response){
+																	swal({ type:"success", title:"Guardar cambios", text:'Se guardaron los datos correctamente', timer:3000 });
+																	location.reload();
+																}else{
+																	swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+																}
+																$.unblockUI();
+															}
+														});
+													}else{
+														$('#item-curp').addClass('is-invalid');
+														$('#item-nombre').addClass('is-invalid');
+														$('#item-apaterno').addClass('is-invalid');
+														$('#item-amaterno').addClass('is-invalid');
+														swal({ type:"warning", title:"Oops!", text:"Nombre y CURP ya estan registrados", timer:3000 });
+													}
+												}else{
+													$.ajax({
+														type: 'put',
+														url: $apiUrl+"titular/edit/<?= $info->id_titular ?>",
+														data: data,
+														dataType: "json",
+														success: function (resp) {
+															if(resp.response){
+																swal({ type:"success", title:"Guardar cambios", text:'Se guardaron los datos correctamente', timer:3000 });
+																location.reload();
+															}else{
+																swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+															}
+															$.unblockUI();
+														}
+													});
+												}
+										}else{
+											$.ajax({
+												type: 'put',
+												url: $apiUrl+"titular/edit/<?= $info->id_titular ?>",
+												data: data,
+												dataType: "json",
+												success: function (resp) {
+													if(resp.response){
+														swal({ type:"success", title:"Guardar cambios", text:'Se guardaron los datos correctamente', timer:3000 });
+														location.reload();
+													}else{
+														swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+													}
+													$.unblockUI();
+												}
+											});
+										}
+									},
+									"json"
+								);
+						}else{
+							if($curpValue==""){
+								$('#item-curp').addClass('is-invalid');
+							}
+							swal({ type:"warning", title:"Oops!", text:"Verificar CURP", timer:3000 });
+						}
+					}else{
+						if($nombre==""){
+							$('#item-nombre').addClass('is-invalid');
+						}
+						if($paterno==""){
+							$('#item-apaterno').addClass('is-invalid');
+						}
+						if($materno==""){
+							$('#item-amaterno').addClass('is-invalid');
+						}
+						swal({ type:"warning", title:"Oops!", text:"Verificar Nombre y Apellidos", timer:3000 });
+					}
+				}
+			});
+
+			$('#frm-item').on('change','#item-curp',function(){
+				curp = $.trim($(this).val().toUpperCase());
+				if(curp != ''){
+					$.get($apiUrl+"integrante/findByCURP/"+curp, 
+						function (resp) {
+							if(resp.response){
+								$curp = true;
+								$('#item-curp').removeClass('is-valid');
+								$('#item-curp').addClass('is-invalid');
+							}else{
+								$curp = false;
+								$('#item-curp').removeClass('is-invalid');
+								$('#item-curp').addClass('is-valid');
+							}
+						},
+						"json"
+					);
+				}
+			});	
+
+			$('#frm-item').on('change','#item-nombre',function(){
+				$('#item-nombre').removeClass('is-invalid');
+			});
+
+			$('#frm-item').on('change','#item-apaterno',function(){
+				$('#item-apaterno').removeClass('is-invalid');
+			});
+
+			$('#frm-item').on('change','#item-amaterno',function(){
+				$('#item-amaterno').removeClass('is-invalid');
+			});
+
+			info = JSON.parse('<?php echo str_replace('\"',' ',str_replace('\n',' ',str_replace('\r\n','<br>',json_encode($info)))); ?>');
+			$.each(info, function (index, value) {
+				if(value!=null) value = value.toString().replaceAll('<br>','\r\n');
+				if(index == 'fecha_solicitud') value = value.substring(0,10);
+				$('#item-'+index).val(value);
+			});
+			$('#item-tipo_empleo').val(<?=$ficha->tipo_empleo?>);
+			$('#item-tc').val(<?=$ficha->tc?>);
+			if(<?= $info->seguro_social ?> == 1){
+				$("#chkSeguro").prop("checked", true);
+			}
+
+			/* $('#item-credencial').change(function(){
+				credencial = $.trim($(this).val());
+				if(credencial != ''){
+					$.get($apiUrl+"titular/findBy/credencial/"+credencial, 
+						function (resp) {
+							if(resp.length > 0){
+								$('#item-credencial').addClass('is-invalid');
+							}else{
+								$('#item-credencial').addClass('is-valid');
+							}
+						},
+						"json"
+					);
+				}
+			}); */
+
+			$('#item-apaterno, #item-amaterno, #item-nombre, #item-fk_municipio, #item-fecha_solicitud, #item-fecha_nacimiento').change(function(){ /* genCred(); */ });
+
+			function genCred(){
+				var apaterno = $.trim($('#item-apaterno').val()).toUpperCase();
+				var amaterno = $.trim($('#item-amaterno').val()).toUpperCase();
+				var nombre = $.trim($('#item-nombre').val()).toUpperCase();
+				var muni = $.trim($('#item-fk_municipio option:selected').text()).toUpperCase();
+				muni = muni.replace(/(^\s*)|(\s*$)|[ ]/g, "");
+				var fecha = $('#item-fecha_solicitud').val();
+				fecha = fecha.split('-');
+
+				var cred = apaterno.substring(0, 2);
+				cred += amaterno.substring(0, 1);
+				cred += nombre.substring(0, 1);
+				cred += fecha[1];
+				cred += fecha[0].substring(2);
+				cred += muni.substring(0, 6);
+				$("#item-credencial").val(cred);
+			}
+			<?php endif; ?>
+
+
+			getItems();
+			function getItems() { 
+				var $integ=0;
+				blockPage();
+				cleanTable('tbl-items');
+				$('#tbl-items tbody').empty();
+				$('#nutri-fk_integrante').empty();
+				$('#nutri-fk_integrante').append('<option value="<?= $info->id_integrante ?>" data-edad="<?= $info->edad ?>" data-sexo="<?= $info->sexo ?>"><?= $info->nombre.' '.$info->apaterno.' '.$info->amaterno ?></option>');
+				$.get($apiUrl+'integrante/getByTit/<?= $info->id_titular ?>', function(resp) {
+					$.each(resp.result, function(index, item) { 
+						addItemRow(item); 
+						if(item.estatus=="1") $integ++;
+					});
+					$integ++;
+					$('.ficha-inte').html($integ);
+					$.unblockUI();
+				});
+			}
+
+			function addItemRow(item) {
+				container = $('#tbl-items tbody');
+				container.find('tr[data-id="'+item.id_integrante+'"]').remove();
+
+				$('#nutri-fk_integrante').append('<option value="'+item.id_integrante+'" data-edad="'+item.edad+'" data-sexo="'+item.sexo+'">'+item.nombre_completo+'</option>');
+
+				escuela = $('#inte-escolaridad option[value="'+item.escolaridad+'"]').text();
+				tr = $('<tr data-id="'+item.id_integrante+'"></tr>').appendTo(container);
+				/* if(item.estatus=="2"){
+					tr = $('<tr data-id="'+item.id_integrante+'" style="background-color:#ff9999"></tr>').appendTo(container);
+				}else{
+					tr = $('<tr data-id="'+item.id_integrante+'"></tr>').appendTo(container);
+				} */
+				tr.append('<td><a href="#" class="btnView"><small>'+item.nombre_completo+'</small></a></td>');
+				tr.append('<td><small>'+item.parentesco+'</small></td>');
+				tr.append('<td class="text-center"><small>'+item.edad+'</small></td>');
+				tr.append('<td class="text-center"><small>'+item.fecha_nacimiento+'</small></td>');
+				tr.append('<td class="text-center"><small>'+item.sexo+'</small></td>');
+				tr.append('<td><small>'+escuela+'</small></td>');
+				tr.append('<td><small>'+item.peso+'</small></td>');
+				tr.append('<td><small>'+item.padecimiento+'</small></td>');
+				tr.append('<td class="text-center"><small>$ '+item.ingreso+'</small></td>');
+				
+				tda = $('<td class="text-center" data-id="'+item.id_integrante+'"></td>').appendTo(tr);
+				actions = '';
+			
+				//baja
+				actions +='<span class="estatus label label-'+(item.estatus==1? 'success': 'warning')+'">'+(item.estatus==1? 'Activo': 'Inactivo')+'</span>';
+
+				<?php if(in_array(MOD_BENE_INTE_BAJA, $permisos)) : ?>
+				actions += ' <a href="#" data-popup="tooltip" title="'+(item.estatus=="1"? 'Inactivar': 'Activar')+'" class="btnBajaInte text-'+(item.estatus=="1"? 'danger': 'success')+'"><i class="mdi mdi-'+(item.estatus=="1"? 'close': 'check')+'-circle"></i></a>';
+				<?php endif; ?>
+				//baja
+
+				<?php if(in_array(MOD_BENE_INTE_EDIT, $permisos)) : ?> actions += '<a href="#" data-popup="tooltip" title="Modificar" class="btnEditInte"><i class="mdi mdi-pencil fa-lg"></i></a> ';<?php endif; ?>
+				<?php if(in_array(MOD_BENE_INTE_DEL, $permisos)) : ?> actions += '<a href="#" data-popup="tooltip" title="Eliminar" class="btnDelInte"><i class="mdi mdi-delete fa-lg" style="color:red;"></i></a> ';<?php endif; ?>
+
+				
+				
+				tda.append(actions);
+			}
+
+			<?php if(in_array(MOD_BENE_INTE_ADD, $permisos)) : ?>
+				function doInteSteps(mostrar){
+					$(".inte-wizard").steps({
+						headerTag: "h6",
+						bodyTag: "section",
+						transitionEffect: "slide",
+						transitionEffectSpeed: 500,
+						enableFinishButton: mostrar,
+						titleTemplate: '<span class="step">#index#</span> #title#',
+						labels: {
+							finish: "Guardar registro", 
+							next: "Siguiente",
+							previous: "Anterior",
+						}, 
+						/* onStepChanging: function (event, currentIndex, newIndex){
+							if(currentIndex == 0){
+								if($('#item-nombre').val() == '')
+							}
+							return true;
+						}, */
+						// onFinished: function (event, currentIndex) {
+							// event.preventDefault();
+							// var form = $(this);
+							// data = {fk_titular: '<?= $info->id_titular ?>'};
+							// $.each($('#frm-inte input, #frm-inte select'), function (index, elem) { 
+							// 	ide = $(elem).attr('id').replace('inte-','');
+							// 	data[ide] = $.trim($(elem).val());
+							// });
+
+							// $nombreInte 	= document.getElementById('inte-nombre').value;
+							// $paternoInte 	= document.getElementById('inte-apaterno').value;
+							// $maternoInte 	= document.getElementById('inte-amaterno').value;
+							// $curpInteValue 	= document.getElementById('inte-curp').value;
+
+							// if($nombreInte!="" && $paternoInte!="" && $maternoInte!=""){
+							// 	$('#inte-nombre').removeClass('is-invalid');
+							// 	$('#inte-apaterno').removeClass('is-invalid');
+							// 	$('#inte-amaterno').removeClass('is-invalid');
+							// 	if($curpInteValue!=""){
+							// 		$('#inte-curp').removeClass('is-invalid');
+
+							// 		$.get($apiUrl+"integrante/findByNombre/"+$nombreInte+"/"+$paternoInte+"/"+$maternoInte, 
+							// 				function (resp) {
+							// 					if(resp.response){
+							// 							if($curpInte){
+							// 								$('#inte-curp').addClass('is-invalid');
+							// 								$('#inte-nombre').addClass('is-invalid');
+							// 								$('#inte-apaterno').addClass('is-invalid');
+							// 								$('#inte-amaterno').addClass('is-invalid');
+							// 								swal({ type:"warning", title:"Oops!", text:"Nombre y CURP ya estan registrados", timer:3000 });
+							// 							}else{
+							// 								blockPage();
+							// 								$.post($apiUrl+"integrante/add/", data,
+							// 									function (resp) {
+							// 										if(resp.response){
+							// 											$('#frm-inte').modal('hide');
+							// 											getItems();
+							// 											swal({ type:"success", title:"Agregar integrante", text:'Se guardaron los datos correctamente', timer:3000 });
+							// 										}else{
+							// 											swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+							// 										}
+							// 										$.unblockUI();
+							// 									},
+							// 									"json"
+							// 								);
+							// 							}
+							// 					}else{
+							// 						blockPage();
+							// 						$.post($apiUrl+"integrante/add/", data,
+							// 							function (resp) {
+							// 								if(resp.response){
+							// 									$('#frm-inte').modal('hide');
+							// 									getItems();
+							// 									swal({ type:"success", title:"Agregar integrante", text:'Se guardaron los datos correctamente', timer:3000 });
+							// 								}else{
+							// 									swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+							// 								}
+							// 								$.unblockUI();
+							// 							},
+							// 							"json"
+							// 						);
+							// 					}
+							// 				},
+							// 				"json"
+							// 			);
+							// 	}else{
+							// 		if($curpInteValue==""){
+							// 			$('#inte-curp').addClass('is-invalid');
+							// 		}
+							// 		swal({ type:"warning", title:"Oops!", text:"Verificar CURP", timer:3000 });
+							// 	}
+							// }else{
+							// 	if($nombreInte==""){
+							// 		$('#inte-nombre').addClass('is-invalid');
+							// 	}
+							// 	if($paternoInte==""){
+							// 		$('#inte-apaterno').addClass('is-invalid');
+							// 	}
+							// 	if($maternoInte==""){
+							// 		$('#inte-amaterno').addClass('is-invalid');
+							// 	}
+							// 	swal({ type:"warning", title:"Oops!", text:"Verificar Nombre y Apellidos", timer:3000 });
+							// }
+						// }
+					});
+				}
+
+				doInteSteps();
+				$('#btnAdd').click(function(e) { e.preventDefault();
+					$(".inte-wizard").steps('destroy').addClass('vertical');
+					doInteSteps(false);
+					$('#frm-inte input, #frm-inte textarea').val('');
+					$.each($('#frm-inte select'), function (i, elem) { 
+						$(elem).val($(elem).find('option:first').val());
+					});
+					$('.inte-add').removeClass('hide');
+					$('.inte-edit').addClass('hide');
+					$('#frm-inte').modal('show');
+				});
+
+				$('#frm-inte').on('change', '#inte-parentesco',function(){
+					$('#frm-inte strong:eq(2)').html($(this).val());
+				});
+
+				$('#frm-inte').on('change','#inte-curp',function(){
+					curp = $.trim($(this).val().toUpperCase());
+					if(curp != ''){
+						$.get($apiUrl+"integrante/findByCURP/"+curp, 
+							function (resp) {
+								if(resp.response){
+									$curpInte = true;
+									$('#inte-curp').removeClass('is-valid');
+									$('#inte-curp').addClass('is-invalid');
+								}else{
+									$curpInte = false;
+									$('#inte-curp').removeClass('is-invalid');
+									$('#inte-curp').addClass('is-valid');
+								}
+							},
+							"json"
+						);
+					}
+				});			
+				
+				$('#frm-inte').on('change','#inte-nombre',function(){
+					$('#inte-nombre').removeClass('is-invalid');
+				});
+
+				$('#frm-inte').on('change','#inte-apaterno',function(){
+					$('#inte-apaterno').removeClass('is-invalid');
+				});
+
+				$('#frm-inte').on('change','#inte-amaterno',function(){
+					$('#inte-amaterno').removeClass('is-invalid');
+				});
+			<?php endif; ?>
+
+			<?php if(in_array(MOD_BENE_INTE_EDIT, $permisos)) : ?>
+			$('body').on('click', '.btnEditInte', function(e){ 
+				e.preventDefault();
+				id = $(this).parent().data('id');
+				blockPage();
+				$.get($apiUrl+"integrante/get/"+id,
+					function (resp) {
+						$(".inte-wizard").steps('destroy').addClass('vertical');
+						doInteSteps(false);
+						$('#frm-inte input, #frm-inte textarea').val('');
+						$getNombreInte = resp.result.nombre;
+						$getPaternoInte = resp.result.apaterno;
+						$getMaternoInte = resp.result.amaterno;
+						$getCURPInte = resp.result.curp;
+						$.each(resp.result, function (key, value) { 
+							$('#inte-'+key).val(value);
+						});
+						$('.inte-edit').removeClass('hide');
+						$('.inte-add').addClass('hide');
+						$('#frm-inte').modal('show');
+						$.unblockUI();
+					},
+					"json"
+				);
+			});
+
+			$('#btnSaveInte').click(function(){
+				$('#btnSaveInte').prop('disabled', true);
+				id = $('#inte-id_integrante').val();
+				if(id > 0){
+					data = {};
+					$.each($('#frm-inte input, #frm-inte select'), function (index, elem) { 
+						ide = $(elem).attr('id').replace('inte-','');
+						data[ide] = $.trim($(elem).val());
+					});
+
+					$nombreInte 	= document.getElementById('inte-nombre').value;
+					$paternoInte 	= document.getElementById('inte-apaterno').value;
+					$maternoInte 	= document.getElementById('inte-amaterno').value;
+					$curpInteValue 	= document.getElementById('inte-curp').value;
+
+					if($nombreInte!="" && $paternoInte!="" && $maternoInte!=""){
+						$('#inte-nombre').removeClass('is-invalid');
+						$('#inte-apaterno').removeClass('is-invalid');
+						$('#inte-amaterno').removeClass('is-invalid');
+						if($curpInteValue!=""){
+							$('#inte-curp').removeClass('is-invalid');
+
+							$.get($apiUrl+"integrante/findByNombre/"+$nombreInte+"/"+$paternoInte+"/"+$maternoInte, 
+									function (resp) {
+										if(resp.response){
+												if($curpInte){
+													if($nombreInte == $getNombreInte && $paternoInte == $getPaternoInte && $maternoInte == $getMaternoInte && $curpInteValue == $getCURPInte){
+														$.ajax({
+															type: 'put',
+															url: $apiUrl+"integrante/edit/"+id,
+															data: data,
+															dataType: "json",
+															success: function (resp) {
+																if(resp.response){
+																	swal({ type:"success", title:"Guardar cambios", text:'Se guardaron los datos del integrante correctamente', timer:3000 });
+																	$('#inte-id_integrante').val(0);
+																	getItems();
+																	$("#btnSaveInte").removeAttr('disabled');
+																	$('#frm-inte').modal('hide');
+																}else{
+																	swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+																	$("#btnSaveInte").removeAttr('disabled');
+																}
+																$.unblockUI();
+															}
+														});
+													}else{
+														$('#inte-curp').addClass('is-invalid');
+														$('#inte-nombre').addClass('is-invalid');
+														$('#inte-apaterno').addClass('is-invalid');
+														$('#inte-amaterno').addClass('is-invalid');
+														swal({ type:"warning", title:"Oops!", text:"Nombre y CURP ya estan registrados", timer:3000 });
+														$("#btnSaveInte").removeAttr('disabled');
+													}
+												}else{
+													blockPage();
+													$.ajax({
+														type: 'put',
+														url: $apiUrl+"integrante/edit/"+id,
+														data: data,
+														dataType: "json",
+														success: function (resp) {
+															if(resp.response){
+																swal({ type:"success", title:"Guardar cambios", text:'Se guardaron los datos del integrante correctamente', timer:3000 });
+																$('#inte-id_integrante').val(0);
+																getItems();
+																$("#btnSaveInte").removeAttr('disabled');
+																$('#frm-inte').modal('hide');
+															}else{
+																swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+																$("#btnSaveInte").removeAttr('disabled');
+															}
+															$.unblockUI();
+														}
+													});
+												}
+										}else{
+											blockPage();
+											$.ajax({
+												type: 'put',
+												url: $apiUrl+"integrante/edit/"+id,
+												data: data,
+												dataType: "json",
+												success: function (resp) {
+													if(resp.response){
+														swal({ type:"success", title:"Guardar cambios", text:'Se guardaron los datos del integrante correctamente', timer:3000 });
+														$('#inte-id_integrante').val(0);
+														getItems();
+														$("#btnSaveInte").removeAttr('disabled');
+														$('#frm-inte').modal('hide');
+													}else{
+														swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+														$("#btnSaveInte").removeAttr('disabled');
+													}
+													$.unblockUI();
+												}
+											});
+										}
+									},
+									"json"
+								);
+						}else{
+							if($curpInteValue==""){
+								$('#inte-curp').addClass('is-invalid');
+							}
+							swal({ type:"warning", title:"Oops!", text:"Verificar CURP", timer:3000 });
+							$("#btnSaveInte").removeAttr('disabled');
+						}
+					}else{
+						if($nombreInte==""){
+							$('#inte-nombre').addClass('is-invalid');
+						}
+						if($paternoInte==""){
+							$('#inte-apaterno').addClass('is-invalid');
+						}
+						if($maternoInte==""){
+							$('#inte-amaterno').addClass('is-invalid');
+						}
+						swal({ type:"warning", title:"Oops!", text:"Verificar Nombre y Apellidos", timer:3000 });
+						$("#btnSaveInte").removeAttr('disabled');
+					}
+				}else{
+					event.preventDefault();
+					var form = $(this);
+					data = {fk_titular: '<?= $info->id_titular ?>'};
+					$.each($('#frm-inte input, #frm-inte select'), function (index, elem) { 
+						ide = $(elem).attr('id').replace('inte-','');
+						data[ide] = $.trim($(elem).val());
+					});
+
+					$nombreInte 	= document.getElementById('inte-nombre').value;
+					$paternoInte 	= document.getElementById('inte-apaterno').value;
+					$maternoInte 	= document.getElementById('inte-amaterno').value;
+					$curpInteValue 	= document.getElementById('inte-curp').value;
+
+					if($nombreInte!="" && $paternoInte!="" && $maternoInte!=""){
+						$('#inte-nombre').removeClass('is-invalid');
+						$('#inte-apaterno').removeClass('is-invalid');
+						$('#inte-amaterno').removeClass('is-invalid');
+						if($curpInteValue!=""){
+							$('#inte-curp').removeClass('is-invalid');
+
+							$.get($apiUrl+"integrante/findByNombre/"+$nombreInte+"/"+$paternoInte+"/"+$maternoInte, 
+									function (resp) {
+										if(resp.response){
+												if($curpInte){
+													$('#inte-curp').addClass('is-invalid');
+													$('#inte-nombre').addClass('is-invalid');
+													$('#inte-apaterno').addClass('is-invalid');
+													$('#inte-amaterno').addClass('is-invalid');
+													swal({ type:"warning", title:"Oops!", text:"Nombre y CURP ya estan registrados", timer:3000 });
+													$("#btnSaveInte").removeAttr('disabled');
+												}else{
+													blockPage();
+													$.post($apiUrl+"integrante/add/", data,
+														function (resp) {
+															if(resp.response){
+																$('#frm-inte').modal('hide');
+																getItems();
+																swal({ type:"success", title:"Agregar integrante", text:'Se guardaron los datos correctamente', timer:3000 });
+																$("#btnSaveInte").removeAttr('disabled');
+																window.location.reload();
+															}else{
+																swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+																$("#btnSaveInte").removeAttr('disabled');
+															}
+															$.unblockUI();
+														},
+														"json"
+													);
+												}
+										}else{
+											blockPage();
+											$.post($apiUrl+"integrante/add/", data,
+												function (resp) {
+													if(resp.response){
+														$('#frm-inte').modal('hide');
+														getItems();
+														swal({ type:"success", title:"Agregar integrante", text:'Se guardaron los datos correctamente', timer:3000 });
+														$("#btnSaveInte").removeAttr('disabled');
+														window.location.reload();
+													}else{
+														swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+														$("#btnSaveInte").removeAttr('disabled');
+													}
+													$.unblockUI();
+												},
+												"json"
+											);
+										}
+									},
+									"json"
+								);
+						}else{
+							if($curpInteValue==""){
+								$('#inte-curp').addClass('is-invalid');
+							}
+							swal({ type:"warning", title:"Oops!", text:"Verificar CURP", timer:3000 });
+							$("#btnSaveInte").removeAttr('disabled');
+						}
+					}else{
+						if($nombreInte==""){
+							$('#inte-nombre').addClass('is-invalid');
+						}
+						if($paternoInte==""){
+							$('#inte-apaterno').addClass('is-invalid');
+						}
+						if($maternoInte==""){
+							$('#inte-amaterno').addClass('is-invalid');
+						}
+						swal({ type:"warning", title:"Oops!", text:"Verificar Nombre y Apellidos", timer:3000 });
+						$("#btnSaveInte").removeAttr('disabled');
+					}
+				}
+			});
+			<?php endif; ?>
+
+			<?php if(in_array(MOD_BENE_INTE_DEL, $permisos)): ?>
+			$('tbody').on('click', '.btnDelInte', function(event) { event.preventDefault();
+				tr = $(this).parents('tr');
+				id = tr.data('id');
+				nom = tr.find('td:eq(0)').text();
+				swal({ title:"Eliminar integrante", text:"No podrá restaurar al integrante <strong>"+nom+"</strong>", type:"warning", html:true, showCancelButton:true, cancelButtonText:"Cancelar", confirmButtonColor:"#DD6B55", confirmButtonText:"Si, eliminar", closeOnConfirm:false }, 
+					function() {
+						blockPage();
+						$.ajax({ url:$apiUrl+'integrante/del/'+id, type:'PUT', dataType:'json', success:
+							function(resp) {
+								if(resp.response) {
+									tr.remove();
+									swal({ type:"success", title:"¡Listo!", text:"Se eliminó el integrante", timer:4000 });
+									location.reload();
+								} else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); }
+
+								$.unblockUI();
+							}
+						});
+					}
+				);
+			});
+			<?php endif; ?>
+
+			<?php if(in_array(MOD_BENE_INTE_BAJA, $permisos)): ?>
+				$('tbody').on('click', '.btnBajaInte', function(event) { event.preventDefault();
+					tr = $(this).parents('tr');
+					id = tr.data('id');
+					nom = tr.find('td:eq(0)').text();
+
+					inte = parseInt($('.ficha-inte').html());
+					//element = $(this);
+					//tr = element.parents('tr');
+					//id = tr.data('id');
+					//nom = trInfo.find('.nombre').text();
+
+					//trInfo = getTrElement('tbl-items', tr);
+
+					estatus = tr.find('.estatus').hasClass('label-success')? "2": "1";
+
+					titulo = tr.find('.estatus').hasClass('label-success')? 'Inactivar': 'Activar';
+
+					swal({ title:titulo+" integrante", text:"¿Desea "+titulo+" al integrante <strong>"+nom+"</strong>?", type:"warning", html:true, showCancelButton:true, cancelButtonText:"Cancelar", confirmButtonColor:"#DD6B55", confirmButtonText:"Si, "+titulo, closeOnConfirm:true }, 
+						function() { blockPage();
+							$.ajax({ url:$apiUrl+'integrante/edit/'+id, type:'PUT', dataType:'json', data:{estatus:estatus}, }).done(
+								function(resp) {
+								if(resp.response) {
+
+									//getItems();
+
+									tr.find('.estatus').removeClass('label-'+(estatus=="1"? 'warning': 'success')).addClass('label-'+(estatus=="1"? 'success': 'warning')).html(estatus=="1"? 'Activo': 'Inactivo');
+
+									tr.find('.btnBajaInte').removeClass('text-'+(estatus!="1"? 'danger': 'success')).addClass('text-'+(estatus!="1"? 'success': 'danger')).html('<i class="mdi mdi-'+(estatus=="1"? 'close': 'check')+'-circle"></i>');
+
+									//setTrData('tbl-items', tr, trInfo);
+									if(estatus=="1") inte++; else inte--;
+									$('.ficha-inte').html(inte);
+									
+								} else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); }
+
+								$.unblockUI();
+						});
+					});
+				});
+			<?php endif; ?>
+
+			<?php if(in_array(MOD_BENE_INTE_EDIT, $permisos)) : ?>
+			$('tbody').on('click', '.btnBaja', function(event) { event.preventDefault();
+				element = $(this);
+				tr = element.parents('tr');
+				trInfo = getTrElement('tbl-items', tr);
+				id = tr.data('id');
+				nom = trInfo.find('.nombre').text();
+				status = trInfo.find('.estado').hasClass('label-success')? 2: 1;
+				titulo = trInfo.find('.estado').hasClass('label-success')? 'Inactivar': 'Activar';
+				swal({ title:titulo+" usuario", text:"¿Desea "+titulo+" al usuario <strong>"+nom+"</strong>?", type:"warning", html:true, showCancelButton:true, cancelButtonText:"Cancelar", confirmButtonColor:"#DD6B55", confirmButtonText:"Si, "+titulo, closeOnConfirm:true }, 
+					function() { blockPage();
+						//data:{fk_usuario:1, fk_session:1}, 
+						$.ajax({ url:$apiUrl+'usuario/edit/'+id, type:'PUT', dataType:'json', data:{status:status}, }).done(
+							function(resp) {
+							if(resp.response) {
+								trInfo.find('.estado').removeClass('label-'+(status==1? 'warning': 'success')).addClass('label-'+(status==1? 'success': 'warning')).html(status==1? 'Activo': 'Inactivo');
+								trInfo.find('.btnBaja').attr('title', (status==1? 'Inactivar': 'Activar')).removeClass('text-'+(status==1? 'success': 'warning')).addClass('text-'+(status==1? 'danger': 'success')).html('<i class="mdi mdi-'+(status==1? 'close': 'check')+'-circle"></i>');
+								setTrData('tbl-items', tr, trInfo);
+							} else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); }
+
+							$.unblockUI();
+					});
+				});
+			});
+			<?php endif; ?>
+
+			$(".nutri-wizard").steps({
+				headerTag: "h6",
+				bodyTag: "section",
+				transitionEffect: "fade",
+				transitionEffectSpeed: 500,
+				titleTemplate: '<span class="step">#index#</span> #title#',
+				enableAllSteps: true,
+				enableFinishButton: false,
+				labels: {
+					finish: "Guardar registro", 
+					next: "Siguiente",
+					previous: "Anterior",
+				}, 
+				/* onStepChanging: function (event, currentIndex, newIndex){
+					if(currentIndex == 0){
+						if($('#item-nombre').val() == '')
+					}
+					return true;
+				}, */
+				onFinished: function (event, currentIndex) {
+					event.preventDefault();
+					var form = $(this);
+					data = {fk_titular: '<?= $info->id_titular ?>'};
+					$.each($('#frm-inte input, #frm-inte select'), function (index, elem) { 
+						ide = $(elem).attr('id').replace('inte-','');
+						data[ide] = $.trim($(elem).val());
+					});
+					blockPage();
+					$.post($apiUrl+"integrante/add/", data,
+						function (resp) {
+							if(resp.response){
+								$('#frm-inte').modal('hide');
+								getItems();
+								swal({ type:"success", title:"Agregar integrante", text:'Se guardaron los datos correctamente', timer:3000 });
+								window.location.reload();
+							}else{
+								swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+							}
+							$.unblockUI();
+						},
+						"json"
+					);
+				}
+			});
+
+			var Fnutri = false;
+
+			$('#btnNutri').click(function(){
+				$('#nutri-fk_integrante').trigger('change');
+				$('#frm-nutri').modal('show');
+			});
+
+			$('#nutri-sel-hist').change(function(){
+				switch(((document.getElementById('nutri-sel-hist').value))) {
+					case "0":
+						$('#tbl-indicadores tbody tr').empty();
+						$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>Seleccione un indicador</small></td><td></td></tr>');
+						break;
+					case "1":
+						$.get($apiUrl+'historial/getByInte/'+$('#nutri-fk_integrante').val(), function(resp) {
+							if(resp.response){
+								$('#tbl-indicadores tbody tr').empty();
+								$.each(resp.result, function(index, item) {
+									if(item.glucosa!=null){
+										if(item.glucosa!=""){
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>'+item.fecha+'</small></td><td><small>'+item.glucosa+'</small></td></tr>');
+										}else{
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+										}
+									}else{
+										$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+									}
+								});
+							}else{
+								$('#tbl-indicadores tbody tr').empty();
+								$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+							}
+						});
+						break;
+					case "2":
+						$.get($apiUrl+'historial/getByInte/'+$('#nutri-fk_integrante').val(), function(resp) {
+							if(resp.response){
+								$('#tbl-indicadores tbody tr').empty();
+								$.each(resp.result, function(index, item) {
+									if(item.trigliceridos!=null){
+										if(item.trigliceridos!=""){
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>'+item.fecha+'</small></td><td><small>'+item.trigliceridos+'</small></td></tr>');
+										}else{
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+										}
+									}else{
+										$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+									}
+								});
+							}else{
+								$('#tbl-indicadores tbody tr').empty();
+								$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+							}
+						});
+						break;
+					case "3":
+						$.get($apiUrl+'historial/getByInte/'+$('#nutri-fk_integrante').val(), function(resp) {
+							if(resp.response){
+								$('#tbl-indicadores tbody tr').empty();
+								$.each(resp.result, function(index, item) {
+									if(item.colesterol!=null){
+										if(item.colesterol!=""){
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>'+item.fecha+'</small></td><td><small>'+item.colesterol+'</small></td></tr>');
+										}else{
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+										}
+									}else{
+										$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+									}
+								});
+							}else{
+								$('#tbl-indicadores tbody tr').empty();
+								$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+							}
+						});
+						break;
+					case "4":
+						$.get($apiUrl+'historial/getByInte/'+$('#nutri-fk_integrante').val(), function(resp) {
+							if(resp.response){
+								$('#tbl-indicadores tbody tr').empty();
+								$.each(resp.result, function(index, item) {
+									if(item.presion!=null){
+										if(item.presion!=""){
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>'+item.fecha+'</small></td><td><small>'+item.presion+'</small></td></tr>');
+										}else{
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+										}
+									}else{
+										$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+									}
+								});
+							}else{
+								$('#tbl-indicadores tbody tr').empty();
+								$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+							}
+						});
+						break;
+					case "5":
+						$.get($apiUrl+'historial/getByInte/'+$('#nutri-fk_integrante').val(), function(resp) {
+							if(resp.response){
+								$('#tbl-indicadores tbody tr').empty();
+								$.each(resp.result, function(index, item) {
+									if(item.talla_edad!=null){
+										if(item.talla_edad!=""){
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>'+item.fecha+'</small></td><td><small>Talla Edad: '+item.talla_edad+'<br>Peso Talla: '+item.peso_talla+'<br>Peso Edad: '+item.peso_edad+'</small></td></tr>');
+										}else{
+											$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+										}
+									}else{
+										$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+									}
+								});
+							}else{
+								$('#tbl-indicadores tbody tr').empty();
+								$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>No hay registros</small></td><td></td></tr>');
+							}
+						});
+						break;
+					break;
+					default:
+				}
+			});
+
+			$('#nutri-fk_integrante').change(function(){
+				$("#nutri-sel-hist").val("0");
+				$('#tbl-indicadores tbody tr').empty();
+				$('#tbl-indicadores tbody').append('<tr class="no-data"><td><small>Seleccione un indicador</small></td><td></td></tr>');
+				$('#frm-nutri .modal-footer strong').html($('#nutri-fk_integrante option:selected').text());
+				$('#nutri-edad').val($('#nutri-fk_integrante option:selected').data('edad')+' años');
+				$('#nutri-sexo').val(($('#nutri-fk_integrante option:selected').data('sexo')=='M'?'Masculino':'Femenino'));
+				getNutri($('#nutri-fk_integrante').val());
+			});
+
+			function getNutri(fk_inte){
+				$.ajax({
+					url: $apiUrl+'ficha_nutricion/getByTit/'+fk_inte,
+					type: 'GET',
+					dataType: 'json'
+				}).done(function(resp) {
+					if(!resp.response){
+						Fnutri=true;
+						//$("#nutriImc").val(resp.result.imc);
+						Nutrilimpiar();
+					}else{
+						Nutrilimpiar();
+						Fnutri=false;						
+						$("#chkObes").val( ((resp.result.evaluacion_clinica).substring(0,1)=='S')
+						? $("#chkObes").prop("checked", true) 
+						: 0 );
+						$("#chkDiab").val( ((resp.result.evaluacion_clinica).substring(1,2)=='S')
+						? $("#chkDiab").prop("checked", true) 
+						: 0 );
+						$("#chkHiper").val( ((resp.result.evaluacion_clinica).substring(2,3)=='S')
+						? $("#chkHiper").prop("checked", true) 
+						: 0 );
+						$("#chkCardi").val( ((resp.result.evaluacion_clinica).substring(3,4)=='S')
+						? $("#chkCardi").prop("checked", true) 
+						: 0 );
+						$("#chkDisli").val( ((resp.result.evaluacion_clinica).substring(4,5)=='S')
+						? $("#chkDisli").prop("checked", true) 
+						: 0 );
+						$("#chkCanc").val( ((resp.result.evaluacion_clinica).substring(5,6)=='S')
+						? $("#chkCanc").prop("checked", true) 
+						: 0 );
+						$("#chkHema").val( ((resp.result.evaluacion_clinica).substring(6,7)=='S')
+						? $("#chkHema").prop("checked", true) 
+						: 0 );
+						$("#chkRena").val( ((resp.result.evaluacion_clinica).substring(7,8)=='S')
+						? $("#chkRena").prop("checked", true) 
+						: 0 );
+						$("#nutri-otro_clini").val((resp.result.evaluacion_clinica).substring(8));
+
+						$("#chkTrau").val( ((resp.result.patologicos).substring(0,1)=='S')
+						? $("#chkTrau").prop("checked", true) 
+						: 0 );
+						$("#chkCiru").val( ((resp.result.patologicos).substring(1,2)=='S')
+						? $("#chkCiru").prop("checked", true) 
+						: 0 );
+						$("#chkGastr").val( ((resp.result.patologicos).substring(2,3)=='S')
+						? $("#chkGastr").prop("checked", true) 
+						: 0 );
+						$("#chkInto").val( ((resp.result.patologicos).substring(3,4)=='S')
+						? $("#chkInto").prop("checked", true) 
+						: 0 );
+						$("#chkInfec").val( ((resp.result.patologicos).substring(4,5)=='S')
+						? $("#chkInfec").prop("checked", true) 
+						: 0 );
+						$("#pato-otro").val((resp.result.patologicos).substring(5));
+
+						taba = (resp.result.tabaco).split(' ');
+						if(taba.length>=3){
+							$("#nutri-edadt").val( taba[0]);
+							$("#nutri-cantt").val( taba[1]);
+							$("#nutri-frect").val( taba[2]);
+						}
+
+						alco = (resp.result.alcohol).split(' ');
+						if(alco.length>=3){
+							$("#nutri-edada").val( alco[0]);
+							$("#nutri-canta").val( alco[1]);
+							$("#nutri-freca").val( alco[2]);
+						}
+
+						acti = (resp.result.actividad).split(' ');
+						if(acti.length>=3){
+							$("#nutri-edadf").val( acti[0]);
+							$("#nutri-cantf").val( acti[1]);
+							$("#nutri-frecf").val( acti[2]);
+						}
+
+						$("#nutri-glucosa").val(resp.result.glucosa);
+						$("#nutri-trigli").val(resp.result.trigliceridos);
+						$("#nutri-coles").val(resp.result.colesterol);
+						$("#nutri-presion").val(resp.result.presion);
+						$("#nutri-urea").val(resp.result.urea);
+						$("#nutri-creati").val(resp.result.creatinina);
+						$("#nutri-hemo").val(resp.result.hemoglobina);
+						$("#nutri-otro_indicador").val(resp.result.otro_indicador);
+						
+						$("#nutri-comi-dia").val(resp.result.comidas_dia);
+
+						$("#come-mis-hora").prop("checked", true); 
+						
+						$("#come-mis-hora").val( resp.result.comida_misma_hora=='1'
+						? $("#come-mis-hora").prop("checked", true) 
+						: $("#come-mis-hora").prop("checked", false) 
+						);
+
+						$("#comi-donde").val(resp.result.comida_donde);
+
+						$("#comi-alerg").val(resp.result.comida_alergia);
+						
+						$("#nutri-observaciones").val(resp.result.observaciones);
+
+						$("#nutri-peso").val(resp.result.peso);
+						
+						$("#nutri-talla").val(resp.result.talla);
+
+						$("#nutri-cintura").val(resp.result.cintura);
+
+						$("#nutriImc").val(resp.result.imc);
+						
+					}
+				});
+			}
+
+			function Nutrilimpiar(){
+				$("#nutri-peso").css("background-color","#ffffff");
+				$("#nutri-talla").css("background-color","#ffffff");
+				$("#chkObes").prop("checked", false);
+				$("#chkDiab").prop("checked", false);
+				$("#chkHiper").prop("checked", false);
+				$("#chkCardi").prop("checked", false);				
+				$("#chkDisli").prop("checked", false);				
+				$("#chkCanc").prop("checked", false);				
+				$("#chkHema").prop("checked", false);				
+				$("#chkRena").prop("checked", false);
+				$("#nutri-otro_clini").val("");
+				$("#chkTrau").prop("checked", false);
+				$("#chkCiru").prop("checked", false);
+				$("#chkGastr").prop("checked", false);
+				$("#chkInto").prop("checked", false);
+				$("#chkInfec").prop("checked", false);
+				$("#pato-otro").val("");
+				$("#nutri-edadt").val("");
+				$("#nutri-cantt").val("");
+				$("#nutri-frect").val("");
+				$("#nutri-edada").val("");
+				$("#nutri-canta").val("");
+				$("#nutri-freca").val("");
+				$("#nutri-edadf").val("");
+				$("#nutri-cantf").val("");
+				$("#nutri-frecf").val("");
+				$("#nutri-glucosa").val("");
+				$("#nutri-trigli").val("");
+				$("#nutri-coles").val("");
+				$("#nutri-presion").val("");
+				$("#nutri-urea").val("");
+				$("#nutri-creati").val("");
+				$("#nutri-hemo").val("");
+				$("#nutri-otro_indicador").val("");
+				$("#nutri-comi-dia").val("");
+				$("#come-mis-hora").prop("checked", false); 
+				$("#come-mis-hora").prop("checked", false);
+				$("#comi-donde").val("");
+				$("#comi-alerg").val("");
+				$("#nutri-observaciones").val("");
+				$("#nutri-peso").val("");
+				$("#nutri-talla").val("");
+				$("#nutri-cintura").val("");
+				$("#nutriImc").val("");
+			}
+
+			$('#btnSaveNutri').click(function(){
+					data = {};
+					data2 = {};
+
+					var Clini = "";
+					$.each($("#frm-nutri input:checkbox[name='chk-clinica']"), function(index, elem) {
+						Clini += $(elem).is(':checked') ? 'S' : 'N';
+					});
+					Clini += (document.getElementById('nutri-otro_clini').value).toUpperCase();
+					data['evaluacion_clinica'] = Clini;
+
+					var Pato = "";
+					$.each($("#frm-nutri input:checkbox[name='chk-pato']"), function(index, elem) {
+						Pato += $(elem).is(':checked') ? 'S' : 'N';
+					});
+					Pato += (document.getElementById('pato-otro').value).toUpperCase();
+					data['patologicos'] = Pato;
+
+					var Taba = "";
+					Taba += ((document.getElementById('nutri-edadt').value))+" "+((document.getElementById('nutri-cantt').value))+" "+((document.getElementById('nutri-frect').value).toUpperCase());
+					data['tabaco'] = Taba;
+
+					var Alco = "";
+					Alco += ((document.getElementById('nutri-edada').value))+" "+((document.getElementById('nutri-canta').value))+" "+((document.getElementById('nutri-freca').value).toUpperCase());
+					data['alcohol'] = Alco;
+
+					var Acti = "";
+					Acti += ((document.getElementById('nutri-edadf').value))+" "+((document.getElementById('nutri-cantf').value))+" "+((document.getElementById('nutri-frecf').value).toUpperCase());
+					data['actividad'] = Acti;
+
+					var Pes = "";
+					Pes += ((document.getElementById('nutri-peso').value));
+					data['peso'] = Pes;
+
+					var Tall = "";
+					Tall += ((document.getElementById('nutri-talla').value));
+					data['talla'] = parseFloat(Tall).toFixed(1);
+
+					var cin = "";
+					cin += ((document.getElementById('nutri-cintura').value));
+					data['cintura'] = cin;
+
+					var ure = "";
+					ure += ((document.getElementById('nutri-urea').value).toUpperCase());
+					data['urea'] = ure;
+
+					var crea = "";
+					crea += ((document.getElementById('nutri-creati').value).toUpperCase());
+					data['creatinina'] = crea;
+
+					var hem = "";
+					hem += ((document.getElementById('nutri-hemo').value).toUpperCase());
+					data['hemoglobina'] = hem;
+
+					var otrIndi = "";
+					otrIndi += ((document.getElementById('nutri-otro_indicador').value).toUpperCase());
+					data['otro_indicador'] = otrIndi;
+
+					var comiDia = "";
+					comiDia += ((document.getElementById('nutri-comi-dia').value).toUpperCase());
+					data['comidas_dia'] = comiDia;
+
+					var comiMisDia = "";
+					comiMisDia = $("input:checkbox[id='come-mis-hora']").is(':checked') ?1 :0;
+					data['comida_misma_hora'] = comiMisDia;
+
+					var comiDond = "";
+					comiDond += ((document.getElementById('comi-donde').value).toUpperCase());
+					data['comida_donde'] = comiDond;
+
+					var comiAlerg = "";
+					comiAlerg += ((document.getElementById('comi-alerg').value).toUpperCase());
+					data['comida_alergia'] = comiAlerg;
+
+					var obsNutri = "";
+					obsNutri += ((document.getElementById('nutri-observaciones').value).toUpperCase());
+					data['observaciones'] = obsNutri;
+
+					var nutriGluc = "";
+					nutriGluc += ((document.getElementById('nutri-glucosa').value).toUpperCase());
+					data2['glucosa'] = nutriGluc;
+
+					var nutriTrigli = "";
+					nutriTrigli += ((document.getElementById('nutri-trigli').value).toUpperCase());
+					data2['trigliceridos'] = nutriTrigli;
+
+					var nutriColes = "";
+					nutriColes += ((document.getElementById('nutri-coles').value).toUpperCase());
+					data2['colesterol'] = nutriColes;
+
+					var nutriPresi = "";
+					nutriPresi += ((document.getElementById('nutri-presion').value).toUpperCase());
+					data2['presion'] = nutriPresi;
+
+					data['estatus'] = 1;
+					data['fk_integrante'] = $('#nutri-fk_integrante').val();
+
+					data2['estatus'] = 1;
+					data2['fk_integrante'] = $('#nutri-fk_integrante').val();
+					data2['edad'] = ($('#nutri-edad').val()).substring(0,2);
+					data2['sexo'] = $('#nutri-sexo').val();
+
+				var valida = false;
+
+				if((document.getElementById('nutri-peso').value) == "" || (document.getElementById('nutri-talla').value) == ""){
+					valida = false;
+					swal({ type:"error", title:"Oops!", text:"Peso y Talla no pueden ir vacíos", timer:4000 });
+					$("#nutri-peso").css("background-color","#ffccd2");
+					$("#nutri-talla").css("background-color","#ffccd2");
+				}else{
+					if( (parseInt(($('#nutri-edad').val()).substring(0,2))*12) < 25 ){
+						if( parseInt(document.getElementById('nutri-peso').value)<1.9 || parseInt(document.getElementById('nutri-peso').value)>24.7 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Peso debe ser mayor a 1.9 y menor a 24.7", timer:4000 });
+							$("#nutri-peso").css("background-color","#ffccd2");
+						}else if( parseInt(document.getElementById('nutri-talla').value)<44.2 || parseInt(document.getElementById('nutri-talla').value)>97.0 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Talla debe ser mayor a 44.2 y menor a 97.0", timer:4000 });
+							$("#nutri-talla").css("background-color","#ffccd2");
+						}else{
+							valida=true;
+						}			
+					}else if( (parseInt(($('#nutri-edad').val()).substring(0,2))*12) > 24 && (parseInt(($('#nutri-edad').val()).substring(0,2))*12) < 61 ){
+						if( parseInt(document.getElementById('nutri-peso').value)<5.6 || parseInt(document.getElementById('nutri-peso').value)>31.2 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Peso debe ser mayor a 5.6 y menor a 31.2", timer:4000 });
+							$("#nutri-peso").css("background-color","#ffccd2");
+						}else if( parseInt(document.getElementById('nutri-talla').value)<76 || parseInt(document.getElementById('nutri-talla').value)>123.9 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Talla debe ser mayor a 76 y menor a 123.9", timer:4000 });
+							$("#nutri-talla").css("background-color","#ffccd2");
+						}else{
+							valida=true;
+						}			
+					}else if( (parseInt(($('#nutri-edad').val()).substring(0,2))*12) > 60 && (parseInt(($('#nutri-edad').val()).substring(0,2))*12) < 121 ){
+						if( parseInt(document.getElementById('nutri-peso').value)<12.4 || parseInt(document.getElementById('nutri-peso').value)>59.2 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Peso debe ser mayor a 12.4 y menor a 59.2", timer:4000 });
+							$("#nutri-peso").css("background-color","#ffccd2");
+						}else if( parseInt(document.getElementById('nutri-talla').value)<95.3 || parseInt(document.getElementById('nutri-talla').value)>157.8 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Talla debe ser mayor a 95.3 y menor a 157.8", timer:4000 });
+							$("#nutri-talla").css("background-color","#ffccd2");
+						}else{
+							valida=true;
+						}			
+					}else if( (parseInt(($('#nutri-edad').val()).substring(0,2))*12) > 120 && (parseInt(($('#nutri-edad').val()).substring(0,2))*12) < 217 ){
+						if( parseInt(document.getElementById('nutri-peso').value)<12.4 || parseInt(document.getElementById('nutri-peso').value)>59.2 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Peso debe ser mayor a 12.4 y menor a 59.2", timer:4000 });
+							$("#nutri-peso").css("background-color","#ffccd2");
+						}else if( parseInt(document.getElementById('nutri-talla').value)<95.3 || parseInt(document.getElementById('nutri-talla').value)>157.8 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Talla debe ser mayor a 95.3 y menor a 157.8", timer:4000 });
+							$("#nutri-talla").css("background-color","#ffccd2");
+						}else{
+							valida=true;
+						}		
+					}else if( (parseInt(($('#nutri-edad').val()).substring(0,2))*12) > 216 ){
+						if( parseInt(document.getElementById('nutri-peso').value)<0 || parseInt(document.getElementById('nutri-peso').value)>200 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Peso debe ser mayor a 0 y menor a 200", timer:4000 });
+							$("#nutri-peso").css("background-color","#ffccd2");
+						}else if( parseInt(document.getElementById('nutri-talla').value)<0 || parseInt(document.getElementById('nutri-talla').value)>200 ){
+							valida = false;
+							swal({ type:"error", title:"Oops!", text:"Talla debe ser mayor a 0 y menor a 200", timer:4000 });
+							$("#nutri-talla").css("background-color","#ffccd2");
+						}else{
+							valida=true;	
+						}
+					}	
+				} 					
+				if(valida){
+					if(Fnutri){
+							blockPage();
+							$.post($apiUrl+'ficha_nutricion/add/', {ficha:data, historial:data2}, function(resp) {
+								if(resp.response) {
+									$('#frm-nutri').modal('hide');
+									swal({ type:"success", title:"¡Listo!", text:"Se guardaron los datos correctamente.", timer:4000 });
+								} else {
+									if(resp.result == -1) { swal({ type:"error", title:"Oops!", text:"Ocurrió algo extraño. Vuelve a intentarlo nuevamente", timer:4000 }); }
+									else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); }
+								}
+								$.unblockUI();
+							},'json');
+						}else{
+							blockPage();
+							$.ajax({
+								type: 'PUT',
+								url: $apiUrl+'ficha_nutricion/edit/'+$('#nutri-fk_integrante').val(),
+								data: {ficha:data, historial:data2},
+								dataType: "json",
+								success: function (resp) {
+									if(resp.response){
+										$('#frm-nutri').modal('hide');
+										swal({ type:"success", title:"¡Listo!", text:"Se guardaron los datos correctamente.", timer:4000 });
+									}else{
+										if(resp.result == -1) { swal({ type:"error", title:"Oops!", text:"Ocurrió algo extraño. Vuelve a intentarlo nuevamente", timer:4000 }); }
+										else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); }
+									}
+									$.unblockUI();
+								}
+							});
+						}
+				}
+			});
+
+			$('#btnFicha').click(function(){
+				$('#frm-ficha').modal('show');
+
+				dataEditTitular = {};
+				$.ajax({
+					type: 'put',
+					url: $apiUrl+"titular/editConsultaFicha/<?= $info->id_titular ?>",
+					data: dataEditTitular,
+					dataType: "json",
+					success: function (resp) {
+						var today = new Date();
+						var now = today.toLocaleString();
+						// container = $("#fichaTecnicaActualizado tbody tr");
+						// container.find('td[data-ultima="tr-info"]').html(now.replace(",",""));
+					}
+				});
+			});
+
+			$('#btnChangePhoto').click(function(e){
+				e.preventDefault();
+				$('#frm-Photo').modal('show');
+			});
+
+			$('#btnEditTitular').click(function(){
+				dataEditTitular = {};
+				$.ajax({
+					type: 'put',
+					url: $apiUrl+"titular/editConsulta/<?= $info->id_titular ?>",
+					data: dataEditTitular,
+					dataType: "json",
+					success: function (resp) {
+						var today = new Date();
+						var now = today.toLocaleString();
+						container = $("#info-titular tbody tr");
+						container.find('td[data-id="tr-info"]').html(now.replace(",",""));
+					}
+				});
+			});
+
+			$('#btnPDFFicha').click(function(){
+				var element = document.getElementById('imprimir');
+				var cred = $('#frm-ficha .card-title').text();
+				var opt = {
+					margin:       6,
+					filename:     cred+'.pdf',
+					/* image:        { type: 'jpeg', quality: 0.98 },
+					html2canvas:  { scale: 2 }, */
+					jsPDF:        { unit: 'mm', format: 'letter', orientation: 'landscape' }
+				};
+				$('.print-titulo').removeClass('d-none');
+				//html2pdf(element,opt);
+				
+				html2pdf().set(opt).from(element).save().then(function(){
+					$('.print-titulo').addClass('d-none');
+				});
+			})
+		});
+		
+		/////////////
+		$apiUrl = '<?= URL_API ?>';
+
+		var userImg = $('#bene-image').dropify({
+			messages: {
+				default: 'Arrastra y suelta una imagen o da click',
+				replace: 'Arrastra y suelta una imagen o da click para reemplazar',
+				remove: 'Eliminar',
+				error: 'Algo salió mal, vuelva a intentarlo'
+			}, 
+			error: {
+				'fileSize': 'El archivo es muy pesado ({{ value }} max).',
+				'minWidth': 'La imagen es muy pequeña ({{ value }}px min de ancho).',
+				'maxWidth': 'La imagen es muy grande ({{ value }}px max de ancho).',
+				'minHeight': 'The image height is too small ({{ value }}px min).',
+				'maxHeight': 'The image height is too big ({{ value }}px max).',
+				'imageFormat': 'Formato de imagen no permitido (solo {{ value }}).',
+				'fileExtension': 'Tipo de archivo no permitido (solo {{ value }}).'
+			}
+		});
+
+		$('#bene-image').change(function() { 
+			// if($('.dropify-wrapper').hasClass('has-error')) {
+				$('#btnImgBene').removeClass('d-none'); 
+			// }else{ 
+			// 	$('#btnImgBene').addClass('d-none'); 
+			// }
+		});
+
+		$('#btnImgBene').click(function() {
+			if(!$('.dropify-wrapper').hasClass('has-error')) {
+				var fd = new FormData();
+				var files = $('#bene-image')[0].files[0];
+				var cred = $('#frm-ficha .card-title').text();
+				fd.append('imagen', files);
+
+				blockPage();
+				$.ajax({ url: $apiUrl+'titular/uploadFoto/'+cred, type: 'post', data: fd, dataType: 'json', contentType: false, processData: false, dataType: 'json', success: function(resp) {	
+					if(resp.response) {
+						$('#foto_tit').attr('src', '<?= URL_ROOT.'/data/fotos/' ?>'+resp.filename);
+						swal({ type: "success", title: "¡Listo!", text: "Se guardó la foto de beneficiario correctamente", timer: 4000 });
+						$('#btnImgBene').addClass('d-none');
+					} else { swal({ type: "warning", title: "Oops!", text: "Ocurrió algo extraño. Vuelve a intentarlo nuevamente", timer: 4000 }); }
+
+					$.unblockUI();
+				}});
+			}
+		});
+	</script>
+
+	<script crossorigin="*" type="text/javascript" src="<?= URL_ROOT ?>/assets/js/firma/es6-shim.js"></script>
+    <script crossorigin="*" type="text/javascript" src="<?= URL_ROOT ?>/assets/js/firma/websdk.client.bundle.min.js"></script>
+    <script crossorigin="*" type="text/javascript" src="<?= URL_ROOT ?>/assets/js/firma/fingerprint.sdk.min.js"></script> 
+	<script>
+        $(function() {
+            var FingerprintSdkTest = (function() {
+                function FingerprintSdkTest() {
+                    this.sdk = new Fingerprint.WebApi;
+
+                    this.sdk.startAcquisition(Fingerprint.SampleFormat.Intermediate).then(function() {
+                    });
+
+                    this.sdk.onSamplesAcquired = function (s) {
+                        var samples = JSON.parse(s.samples);
+                        var sampleData = Fingerprint.b64UrlTo64(samples[0].Data);
+                        saveFingerprint(sampleData);
+                    };
+
+                    this.sdk.onCommunicationFailed = function (e) {
+                        communicationFail();
+                    };
+
+                    FingerprintSdkTest.prototype.startCapture = function() {
+                        this.sdk.startAcquisition(Fingerprint.SampleFormat.Intermediate).then(function() {
+                        });
+                    }
+
+                    FingerprintSdkTest.prototype.stopCapture = function() {
+                        this.sdk.stopAcquisition().then(function() {
+                        });
+                    }
+                }
+
+                return FingerprintSdkTest;
+            })();
+
+            var fp1 = null;
+            var fp2 = null;
+            var fp3 = null;
+            var fp4 = null;
+
+			
+			$('#btnFirma').click(function(){
+				$('.msg').slideUp();
+				$('.firmar').slideDown();
+				var reader = new FingerprintSdkTest();
+			});
+
+            function saveFingerprint(fpData) {
+                mustContinue = true;
+
+                /*if(fp1 == null) {
+                    fp1 = fpData;
+                    $('#capture').css('opacity', '0.35');
+                    $('body').css('background', '#DEFCFA');
+                    $('.instruction').html('Levante y vuelva a poner su dedo en el lector');
+                } else if(fp2 == null) {
+                    fp2 = fpData;
+                    $('#capture').css('opacity', '0.50');
+                    $('body').css('background', '#BBF2EE');
+                    $('.instruction').html('Repita el proceso una vez más');
+                }
+                else if(fp3 == null) {
+                    fp3 = fpData;
+                    $('#capture').css('opacity', '0.65');
+                    $('body').css('background', '#7EDED7');
+                    $('.instruction').html('Repita el proceso por última vez');
+                } else {*/
+                    fp4 = fpData;
+                    tit = '<?php echo $_GET['tit']; ?>';
+                    $.post('<?php echo URL_ROOT; ?>/core/action.php', {action: 'enrollment', data: {fp1: fp4, fp2: fp4, fp3: fp4, fp4: fp4}, user: tit}, function(resp) {
+                        if(resp.result) {
+                            $('#capture').css('opacity', '1');
+                            $('body').css('background', '#3BAEA5');
+                            $('.instruction').html('Huella capturada exitosamente');
+                        } else {
+                            $('#capture').css('opacity', '0');
+                            $('body').css('background', 'white');
+                            $('.instruction').html('Ocurrió un error al capturar la huella').css('color', 'red');
+                            $('#btnRestart').css('display', 'block');
+                            $('#btnBack').css('display', 'none');
+                        }
+                    },'json');
+
+                    mustContinue = false;
+                //}
+                reader.stopCapture();
+                
+                if(mustContinue) {
+                    reader.startCapture();
+                }
+            }
+
+            function communicationFail() {
+                $('.instruction').html('Ha ocurrido un error de comunicación con el dispositivo').css('color', 'red');
+                $('#btnRestart').css('display', 'block');
+                $('#btnBack').css('display', 'none');
+                $('#capture').css('opacity', '0');
+            }
+        });
+    </script>

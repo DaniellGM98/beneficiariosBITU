@@ -1,0 +1,83 @@
+<?php 
+	include 'header.phtml';
+
+	$arrDia = array('','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado');
+    $arrMes = array('','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre');
+
+    $strFechaInicio = $arrDia[date('w', strtotime($fechaInicio))]." ".substr($fechaInicio, 8,10)." de ".$arrMes[date('n', strtotime($fechaInicio))];
+	$strFechaFin = $arrDia[date('w', strtotime($fechaFin))]." ".substr($fechaFin, 8,10)." de ".$arrMes[date('n', strtotime($fechaFin))];
+?>
+	<div class="row page-titles">
+		<div class="col-md-8 align-self-center">
+			<h3 class="text-themecolor"><i class="mdi mdi-checklist-check fa-lg"></i> <strong>Asistencia APP</strong> <?= $strFechaInicio ?> al <?= $strFechaFin ?></h3>
+		</div>	
+		<div class="col-md-2 text-left">
+			Desde:
+			<input type="date" class="form-control form-control-sm m-r-10 d-nonne" id="fechaInicio" value="<?= $fechaInicio ?>" max="<?= date('Y-m-d') ?>">			
+		</div>	
+		<div class="col-md-2 text-left">
+			Hasta:
+			<input type="date" class="form-control form-control-sm m-r-10 d-nonne" id="fechaFin" value="<?= $fechaFin ?>" max="<?= date('Y-m-d') ?>">
+		</div>
+	</div>
+	<div class="container-fluid">
+		<div class="row justify-content-center">
+			<div class="col-4">
+				<div class="card">
+					<div class="card-body">
+						<h4 class="card-title">Por Usuario</h4>
+						<hr>
+						<table class="table table-sm table-hover table-striped">
+							<thead>
+								<tr>
+									<th>Nombre</th>
+									<th>Apellidos</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ($usuarios as $usuario) {
+									echo '<tr><td>'.$usuario->nombre.'</td><td>'.$usuario->apellidos.'</td><td><a href="'.URL_ROOT.'/app/lista/1/'.$usuario->id_usuario.'/'.$fechaInicio.'/'.$fechaFin.'">Ver Lista</a></td></tr>';
+								}
+								?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-4">
+				<div class="card">
+					<div class="card-body">
+						<h4 class="card-title">Por Lista</h4>
+						<hr>
+						<table class="table table-sm table-hover table-striped">
+							<thead>
+								<tr>
+									<th>Numero</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ($numero as $num) {
+									echo '<tr><td>'.$num->lista.'</td><td><a href="'.URL_ROOT.'/app/lista/2/'.$num->lista.'/'.$fechaInicio.'/'.$fechaFin.'">Ver Lista</a></td></tr>';
+								}
+								?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?php include 'footer.phtml';?>
+	<script type="text/javascript">
+		$(function() {
+			$('#fechaInicio').change(function(){
+				if($('#fechaInicio').val() != '') window.open('<?= URL_API ?>'+'app/asistencia/'+$('#fechaInicio').val()+"/"+$('#fechaFin').val(),"_self");
+			});
+			$('#fechaFin').change(function(){
+				if($('#fechaFin').val() != '') window.open('<?= URL_API ?>'+'app/asistencia/'+$('#fechaInicio').val()+"/"+$('#fechaFin').val(),"_self");
+			});
+		});
+	</script>

@@ -1,0 +1,92 @@
+<?php 
+	include 'header.phtml';
+?>
+	<div class="row page-titles">
+		<div class="col-md-5 align-self-center">
+			<h3 class="text-themecolor"><i class="mdi mdi-hexagon-multiple fa-lg"></i> Lista de Asistencia Comunidad</h3>
+		</div>
+		<div class="col-md-7">
+			<div class="form-inline justify-content-end">
+				<select id="cboComu" class="form-control form-control-sm">
+				</select>
+				<button type="button" class="btn btn-sm btn-secondary m-l-10" id="btnPrint"><i class="mdi mdi-printer fa-lg"></i> Imprimir</button:button>
+			</div>
+		</div>
+	</div>
+	<div class="container-fluid">
+		<div class="row justify-content-center">
+			<div class="col-10">
+				<div class="card" id="info">
+					<div class="card-body text-center">
+						<span></span> titulares en lista.
+						<hr>
+						<table id="tbl-lista" class="table table-sm table-striped table-hover">
+							<thead>
+								<tr>
+									<th class="text-left">Credencial</th>
+									<th>Nombre</th>
+									<th>Colonia</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<?php include 'footer.phtml';?>
+	<script type="text/javascript">
+		$(function() {
+			$('#mnu-asist').addClass('active');
+			$apiUrl = '<?= URL_API ?>';
+
+			$.get($apiUrl+"/titular/getComunidades/",
+				function (resp) {
+					$.each(resp, function (index, item) { 
+						$('#cboComu').append('<option value="'+item.id+'">'+item.nombre+'</option') ;
+					});
+					getLista();
+				},
+				"json"
+			);
+			
+			$('#cboComu').change(function(){ getLista(); });
+
+			function getLista(){
+				blockPage();
+				$('#tbl-lista tbody').empty();
+				tipo = [];
+				$.each($('input[name=chk-tipo]:checked'), function (index, elem) { tipo.push($(elem).val()); });
+				$.get($apiUrl+"titular/getByComu/"+$('#cboComu').val(),
+					function (resp) {
+						$.each(resp, function (index, item) { 
+							addRowItem(item);
+						});
+						$('#info span:eq(0)').html(resp.length);
+						$.unblockUI();
+					},
+					"json"
+				);
+			}
+
+			function addRowItem(item){
+				tr = $('<tr></tr>');
+				tr.append('<td class="text-left">'+item.credencial+'</td>');
+				tr.append('<td>'+item.nombre+'</td>');
+				tr.append('<td>'+item.colonia+'</td>');
+				$('#tbl-lista tbody').append(tr);
+			}
+
+			$('#btnPrint').click(function(){
+				window.open('<?= URL_ROOT ?>/titular/getPDFByComu/'+$('#cboComu').val());
+			});
+
+			$('body').on("keydown", function(e) { 
+				if (e.ctrlKey && e.which === 80) { // ctrl+P
+					window.open('<?= URL_ROOT ?>/titular/getPDFByComu/'+$('#cboComu').val());
+					e.preventDefault();
+				}
+			});
+		});
+	</script>

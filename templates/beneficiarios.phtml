@@ -1,0 +1,1384 @@
+<?php 
+	include 'header.phtml';
+
+	if(isset($_SESSION['sucursal']) && (!isset($solicitudes) || count($solicitudes)==0)):
+?>
+	<link href="<?= URL_ROOT ?>/assets/plugins/wizard/steps.css" rel="stylesheet">
+	<div class="row page-titles">
+		<div class="col-md-5 align-self-center">
+			<h3 class="text-themecolor"><i class="mdi mdi-contacts"></i> Beneficiarios</h3>
+		</div>
+		<div class="col-md-7 align-self-end">
+			<?php if(in_array(MOD_BENE_ADD, $permisos)) : ?>
+			<button class="btn btn-success pull-right" id="btnAdd"><i class="mdi mdi-plus"></i> Agregar</button>
+			<?php endif; ?>
+		</div>
+	</div>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-12">
+				<div class="card">
+					<div class="card-body">
+						<div class="pull-right">
+
+							<!-- <?php if(in_array(MOD_BENE_SALARIO_EDIT, $permisos)) : ?>
+							<button type="button" class="btn btn-secondary" data-toggle="modal" id="btnSalario"><i class="mdi mdi-worker"></i> Salirio Mínimo</button>
+							<?php endif; ?> -->
+
+							<button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#frm-filtros"><i class="mdi mdi-filter"></i> Filtrar</button>
+							<button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#frm-csv"><i class="mdi mdi-file-excel-box"></i> Exportar</button>
+						</div>
+						<h4 class="card-title">Beneficiarios registrados</h4>
+						<h6 class="card-subtitle">Todos los titulares e integrantes registrados.</h6>
+
+						<div class="table-responsive">
+							<table id="tbl-items" class="table table-hover table-striped table-sm">
+								<thead>
+									<tr>
+										<th>Credencial</th>
+										<th>Nombre</th>
+										<th>Parentesco</th>
+										<th class="text-center">Edad</th>
+										<th class="text-center">Nacimiento</th>
+										<th class="text-center">Sexo</th>
+										<th class="text-center">Teléfono</th>
+										<th>Escolaridad</th>
+										<th>Peso/IMC</th>
+										<th>Colonia</th>
+										<th>Municipio</th>
+										<th class="text-center">Status</th>
+										<th class="text-center">Acciones</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<?php if(in_array(MOD_BENE_ADD, $permisos)) : ?>
+		<div class="modal" id="frm-item">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h3 class="modal-title text-info"><i class="mdi mdi-account-card-details"></i> Datos del Beneficiario</h3>
+					</div>
+					<div class="modal-body wizard-content">
+						<form action="#" class="tit-wizard vertical wizard-circle">
+							<!-- Step 1 -->
+							<h6>General</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-fecha_solicitud">Fecha Solicitud:</label>
+											<input type="date" class="form-control" id="item-fecha_solicitud">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-tipo">Tipo Registro:</label>
+											<select class="custom-select form-control" id="item-tipo">
+												<option value="1">Beneficiario</option>
+												<option value="2">Voluntario</option>
+												<option value="3">Comunidad</option>
+												<!-- <option value="4">COVID-19</option> -->
+												<option value="5">Becado</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-nombre">Nombre (s):</label>
+											<input type="text" class="form-control" id="item-nombre" placeholder="Nombre del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-apaterno">Apellido Paterno:</label>
+											<input type="text" class="form-control" id="item-apaterno" placeholder="Apellido del titular">
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-amaterno">Apellido Materno:</label>
+											<input type="text" class="form-control" id="item-amaterno" placeholder="Apellido del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-fecha_nacimiento">Fecha Nacimiento:</label>
+											<input type="date" class="form-control" id="item-fecha_nacimiento">
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-curp">CURP:</label>
+											<input type="text" class="form-control" id="item-curp" maxlength="18" placeholder="Clave Única de Registro de Población">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-numero_telefono">Teléfono de contacto:</label>
+											<input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required class="form-control" id="item-numero_telefono" maxlength="10" placeholder="Teléfono de contacto">
+										</div>
+									</div>
+								</div>
+							</section>
+							<!-- Step 2 -->
+							<h6>Domicilio</h6>
+							<section>
+								<!-- <div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-vialidad">Vialidad:</label>
+											<select class="custom-select form-control" id="item-vialidad">
+												<option value=""> Seleccione </option>
+												<option value="1">Ampliación</option>
+												<option value="2">Andador</option>
+												<option value="3">Avenida</option>
+												<option value="4">Boulevard</option>
+												<option value="5">Calle</option>
+												<option value="6">Callejón</option>
+												<option value="7">Calzada</option>
+												<option value="8">Cerrada</option>
+												<option value="9">Circuito</option>
+												<option value="10">Circunvalacion</option>
+												<option value="11">Continuacion</option>
+												<option value="12">Corredor</option>
+												<option value="13">Diagonal</option>
+												<option value="14">Eje Vial</option>
+												<option value="15">Pasaje</option>
+												<option value="16">Peatonal</option>
+												<option value="17">Periferico</option>
+												<option value="18">Privada</option>
+												<option value="19">Prolongación</option>
+												<option value="20">Retorno</option>
+												<option value="21">Viaducto</option>
+												<option value="22">Ninguno</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-asentamiento">Asentamiento:</label>
+											<select class="custom-select form-control" id="item-asentamiento">
+												<option value=""> Seleccione </option>
+												<option value="1">Aeropuerto</option>
+												<option value="2">Ampliación</option>
+												<option value="3">Barrio</option>
+												<option value="4">Cantón</option>
+												<option value="5">Ciudad</option>
+												<option value="6">Industrial</option>
+												<option value="7">Colonia</option>
+												<option value="8">Condominio</option>
+												<option value="9">Conjunto Hab</option>
+												<option value="10">Corredor Industrial</option>
+												<option value="11">Coto</option>
+												<option value="12">Cuartes</option>
+												<option value="13">Ejido</option>
+												<option value="14">Ex Hacienda</option>
+												<option value="15">Fracción</option>
+												<option value="16">Fraccionamiento</option>
+												<option value="17">Granja</option>
+												<option value="18">Hacienda</option>
+												<option value="19">Ingenio</option>
+												<option value="20">Manzana</option>
+												<option value="21">Paraje</option>
+												<option value="22">Parque Industrial</option>
+												<option value="23">Privada</option>
+												<option value="24">Prolongación</option>
+												<option value="25">Pueblo</option>
+												<option value="26">Puerto</option>
+												<option value="27">Ranchería</option>
+												<option value="28">Rancho</option>
+												<option value="29">Región</option>
+												<option value="30">Residencial</option>
+												<option value="31">Rinconada</option>
+												<option value="32">Sección</option>
+												<option value="33">Súpermanzana</option>
+												<option value="34">Unidad</option>
+												<option value="35">Unidad Hab.</option>
+												<option value="36">Villa</option>
+												<option value="37">Zona Federal</option>
+												<option value="38">Zona Industrial</option>
+												<option value="39">Zona Militar</option>
+												<option value="40">Zona Naval</option>
+												<option value="41">Ninguno</option>
+											</select>
+										</div>
+									</div>
+								</div> -->
+								<div class="row">
+									<div class="col-md-9">
+										<div class="form-group">
+											<label for="item-domicilio">Calle:</label>
+											<input type="text" class="form-control" id="item-domicilio">
+										</div>
+									</div>
+									<div class="col-md-3">
+										<div class="form-group">
+											<label for="item-numero">Número:</label>
+											<input type="text" class="form-control" id="item-numero">
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<!-- <label for="item-colonia">Localidad:</label> -->
+											<label for="item-colonia">Colonia:</label>
+											<input type="text" class="form-control" id="item-colonia">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="domi-fk_municipio">Municipio:</label>
+											<select class="custom-select form-control" id="item-fk_municipio">
+												<option value=""> Seleccione </option>
+												<?php
+													$municipios = $todo->model->titular->getMunicipios();
+													foreach($municipios as $muni) echo '<option value="'.$muni->id_municipio.'">'.$muni->nombre.'</option>';
+												?>
+											</select>
+										</div>
+									</div>
+									<!-- <div class="col-md-4">
+										<div class="form-group">
+											<label for="item-gasto_baceh">Transporte para venir:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="item-gasto_baceh" placeholder="Gasto semanal">
+											</div>
+										</div>
+									</div> -->
+								</div>
+							</section>
+							<!-- Step 3 -->
+							<h6>Otros Datos</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-sexo">Sexo:</label>
+											<select class="custom-select form-control" id="item-sexo">
+												<option value=""> Seleccione </option>
+												<option value="F">Femenino</option>
+												<option value="M">Masculino</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-estado_civil">Estado Civil:</label>
+											<select class="custom-select form-control" id="item-estado_civil">
+												<option value="1">Soltero</option>
+												<option value="2">Casado</option>
+												<option value="3">Divorciado</option>
+												<option value="4">Viudo</option>
+												<option value="5">Unión Libre</option>
+												<!--option value="6">Separado</option-->
+												<option value="7">Madre Soltera</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-escolaridad">Escolaridad:</label>
+											<select class="custom-select form-control" id="item-escolaridad">
+												<!-- <option value="0">No Aplica</option> -->
+												<option value="1">Analfabeto</option>
+												<!-- <option value="2">Alfabeto</option> -->
+												<option value="3">Preescolar</option>
+												<option value="4">Primaria</option>
+												<option value="5">Secundaria</option>
+												<option value="6">Preparatoria</option>
+												<option value="7">Carrera técnica con primaria completa</option>
+												<option value="8">Carrera técnica con secundaria completa</option>
+												<option value="9">Carrera técnica con preparatoria completa</option>
+												<option value="10">Licenciatura</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-padecimiento">Padecimiento:</label>
+											<select class="custom-select form-control" id="item-padecimiento">
+												<option value="NINGUNO">NINGUNO</option>
+												<option value="OBESIDAD">OBESIDAD</option>
+												<option value="DIABETES">DIABETES</option>
+												<option value="HIPERTENSIÓN">HIPERTENSIÓN</option>
+												<option value="ENF. CARDIOVASCULARES">ENF. CARDIOVASCULARES</option>
+												<option value="DISLIPIDEMIAS">DISLIPIDEMIAS</option>
+												<option value="CÁNCER">CÁNCER</option>
+												<option value="ENF. HEMATOLÓGICAS">ENF. HEMATOLÓGICAS</option>
+												<option value="ENF. RENALES">ENF. RENALES</option>
+												<option value="MENTAL">MENTAL</option>
+												<option value="OTROS">OTROS</option>
+											</select>
+										</div>
+									</div>
+									<!-- <div class="col-md-6">
+										<div class="form-group">
+											<label for="item-sindrome">Síndrome:</label>
+											<select class="custom-select form-control" id="item-sindrome">
+												<option value="0">No Aplica</option>
+												<option value="2">Integrante</option>
+												<option value="3">Titular</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-discapacidad">Disc Psicomotriz:</label>
+											<select class="custom-select form-control" id="item-discapacidad">
+												<option value="0">No Aplica</option>
+												<option value="2">Integrante</option>
+												<option value="3">Titular</option>
+											</select>
+										</div>
+									</div> -->
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-telefono">Teléfono:</label>
+											<select class="custom-select form-control" id="item-telefono">
+												<option value="3">No Tiene</option>
+												<option value="4">No es suyo</option>
+												<option value="2">Fijo (de casa)</option>
+												<option value="1">Celular</option>
+												<option value="0">Ambos</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-tc">Tarjeta Depart:</label>
+											<select class="custom-select form-control" id="item-tc">
+												<option value="3">No Tiene</option>
+												<option value="0">Si Tiene</option>
+												<option value="4">Remesa</option>
+											</select>
+										</div>
+									</div>
+								</div>
+							</section>
+							<!-- Step 4 -->
+							<h6>Ingresos</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-ocupacion">Ocupación:</label>
+											<input type="text" class="form-control" id="item-ocupacion" placeholder="Ocupación del titular">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-tipo_ocupacion">Tipo de Ocupación:</label>
+											<select class="custom-select form-control" id="item-tipo_ocupacion">
+												<option value="12">Ninguno</option>
+												<option value="0">Estudiante</option>
+												<option value="1">Sin actividad por enfermedad</option>
+												<option value="2">Sin actividad por edad</option>
+												<option value="3">Jubilado</option>
+												<option value="4">Empleado</option>
+												<option value="5">Oficio</option>
+												<option value="6">Profesionista</option>
+												<option value="7">Obrero</option>
+												<option value="8">Ama de casa</option>
+												<option value="9">Servidor público</option>
+												<option value="10">Infantil</option>
+												<option value="11">Desempleado</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-tipo_empleo">Tipo de empleo:</label>
+											<select class="custom-select form-control" id="item-tipo_empleo">
+												<option value="2">No tiene</option>
+												<option value="4">Medio Tiempo</option>
+												<option value="5">Informal</option>
+												<option value="3">Temporal</option>
+												<option value="0">Permanente</option>
+												<option value="1">Propio Legal</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-ingreso">Ingreso:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="item-ingreso" placeholder="Numérico, mensual">
+											</div>
+										</div>
+									</div>
+									<!-- <div class="col-md-6">
+										<div class="form-group">
+											<label for="item-personas_depen">Personas que dependen:</label>
+											<div class="input-group">
+												<input type="number" class="form-control" id="item-personas_depen" placeholder="Numérico">
+											</div>
+										</div>
+									</div> -->
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-aporte_gasto">Aporte para gasto:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="item-aporte_gasto" placeholder="Numérico, mensual">
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-otro_apoyo">Otro Apoyo:</label>
+											<select class="custom-select form-control" id="item-otro_apoyo">
+												<option value="3">Ninguno</option>
+												<option value="2">Despensa</option>
+												<option value="1">Prospera</option>
+												<option value="6">Remesa</option>
+												<option value="4">Pensión Alimenticia</option>
+												<option value="5">Pensión Gobierno</option>
+												<option value="0">Otros</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-ingreso_otro_apoyo">Ingreso Otro Apoyo:</label>
+											<div class="input-group">
+												<div class="input-group-prepend"><span class="input-group-text">$</span></div>
+												<input type="number" class="form-control text-right" id="item-ingreso_otro_apoyo" placeholder="Numérico, mensual">
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+								<div class="col-md-6">
+										<div class="form-group">
+											<div class="c-inputs-stacked">
+												<label class="inline custom-control custom-checkbox block mb-0">
+													<input type="checkbox" id="chkSeguro" name="chk-seguro" class="custom-control-input"> <span class="custom-control-label ml-0">Seguro Social</span>
+												</label>
+											</div>
+										</div>
+									</div>
+								</div>
+							</section>
+							<!-- Step 5 -->
+							<h6>Registrar</h6>
+							<section>
+								<div class="row">
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-credencial">Credencial:</label>
+											<input type="text" class="form-control" id="item-credencial">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-foto">Foto Titular</label>
+											<div class="custom-file">
+												<input type="file" class="custom-file-input" id="foto" accept="image/*">
+												<label class="custom-file-label" for="foto" data-browse="Buscar">Seleccionar foto</label>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-fecha_visita">Día Visita</label>
+											<select class="custom-select form-control" id="item-fecha_visita" name="location">
+												<option value="1">Lunes</option>
+												<option value="2">Martes</option>
+												<option value="3">Miercoles</option>
+												<option value="4">Jueves</option>
+												<option value="5">Viernes</option>
+												<option value="6">Sabado</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-lista">Lista:</label>
+											<input type="number" class="form-control" id="item-lista" placeholder="Número de Lista">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-folio_sigo">FOLIO SIGO</label>
+											<input type="text" class="form-control" id="item-folio_sigo" placeholder="FOLIO SIGO">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-actualizo">Registró</label>
+											<input type="text" class="form-control" id="item-actualizo" placeholder="Nombre de quien guarda el registro">
+										</div>
+									</div> 
+									<div class="col-md-6">
+										<div class="form-group">
+											<label for="item-observaciones">Observaciones</label>
+											<textarea name="decisions" id="item-observaciones" rows="4" class="form-control"></textarea>
+										</div>
+									</div>
+								</div>
+							</section>
+						</form>
+					</div>
+					<div class="modal-footer d-flex justify-content-end">
+							<button type="button" class="btn btn-inverse waves-effect waves-light" data-dismiss="modal">Cancelar</button>
+							<button type="button" class="btn btn-success waves-effect waves-light" id="btnSaveUsuario">Guardar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php endif; ?>
+		
+		<div class="modal" id="frm-filtros">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h3 class="modal-title text-info"><i class="mdi mdi-filter"></i> Filtrar Beneficiarios</h3>
+					</div>
+					<div class="modal-body">
+						<form>
+							<div class="form-group row m-b-10">
+								<label for="fil-sexo" class="col-sm-4 col-form-label col-form-label-sm text-right">Sexo</label>
+								<div class="col-sm-8">
+									<select id="fil-sexo" class="custom-select custom-select-sm">
+										<option value="0">Ambos</option>
+										<option value="F">Femenino</option>
+										<option value="M">Masculino</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-edad" class="col-sm-4 col-form-label col-form-label-sm text-right">Rango de edad</label>
+								<div class="col-sm-8">
+									<select id="fil-edad" class="custom-select custom-select-sm">
+										<option value="0">Todas</option>
+										<option value="1">0 - 3</option>
+										<option value="2">4 - 9</option>
+										<option value="3">10 - 17</option>
+										<option value="4">18 - 30</option>
+										<option value="5">31 - 50</option>
+										<option value="6">51 - &gt;</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-peso" class="col-sm-4 col-form-label col-form-label-sm text-right">Peso / IMC</label>
+								<div class="col-sm-8">
+									<select id="fil-peso" class="custom-select custom-select-sm">
+									<?php
+										$arrPeso = array('Todos','Desnutrición Grave', 'Desnutrición moderada', 'Desnutrición leve', 'Delgadez Severa', 'Delgadez', 'Peso Bajo Severo', 'Peso Bajo', 'Bajo peso', 'Normal', 'Peso Normal', 'Con riesgo de sobrepeso', 'Sobrepeso', 'Obesidad', 'Obesidad I', 'Obesidad II', 'Obesidad III');
+										for($i=0; $i<count($arrPeso);$i++){
+											echo "<option value='".$i."'>".$arrPeso[$i]."</option>\n";
+										}
+                                   	?>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-fk_municipio" class="col-sm-4 col-form-label col-form-label-sm text-right">Municipio</label>
+								<div class="col-sm-8">
+									<select id="fil-fk_municipio" class="custom-select custom-select-sm">
+										<option value="0">Todos</option>
+										<?php
+											foreach($municipios as $muni) echo '<option value="'.$muni->id_municipio.'">'.$muni->nombre.'</option>';
+										?>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-parent" class="col-sm-4 col-form-label col-form-label-sm text-right">Parentesco</label>
+								<div class="col-sm-8">
+									<select id="fil-parent" class="custom-select custom-select-sm">
+										<option value="0">Todos</option>
+										<option value="TITULARES">TITULARES</option>
+										<option value="INTEGRANTES">INTEGRANTES</option>
+										<option value="CÓNYUGE">CÓNYUGE</option>
+										<option value="HIJO (A)">HIJO (A)</option>
+										<option value="NIETO (A)">NIETO (A)</option>
+										<option value="BISNIETO (A)">BISNIETO (A)</option>
+										<option value="PADRE">PADRE</option>
+										<option value="MADRE">MADRE</option>
+										<option value="SUEGRO (A)">SUEGRO (A)</option>
+										<option value="HERMANO (A)">HERMANO (A)</option>
+										<option value="CUÑADO (A)">CUÑADO (A)</option>
+										<option value="YERNO">YERNO</option>
+										<option value="NUERA">NUERA</option>
+										<option value="TIO (A)">TIO (A)</option>
+										<option value="PRIMO (A)">PRIMO (A)</option>
+										<option value="OTRO">OTRO</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-escolaridad" class="col-sm-4 col-form-label col-form-label-sm text-right">Escolaridad</label>
+								<div class="col-sm-8">
+									<select id="fil-escolaridad" class="custom-select custom-select-sm">
+										<option value="-1">Todas</option>
+										<option value="0">No Aplica</option>
+										<option value="1">Analfabeto</option>
+										<option value="2">Alfabeto</option>
+										<option value="3">Preescolar</option>
+										<option value="4">Primaria</option>
+										<option value="5">Secundaria</option>
+										<option value="6">Preparatoria</option>
+										<option value="7">Carrera técnica con primaria completa</option>
+										<option value="8">Carrera técnica con secundaria completa</option>
+										<option value="9">Carrera técnica con preparatoria completa</option>
+										<option value="10">Licenciatura</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-status" class="col-sm-4 col-form-label col-form-label-sm text-right">Estatus</label>
+								<div class="col-sm-8">
+									<select id="fil-status" class="custom-select custom-select-sm">
+										<option value="0">Todos</option>
+										<option value="1">Activos</option>
+										<option value="2">Bajas</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-tipo" class="col-sm-4 col-form-label col-form-label-sm text-right">Tipo Registro</label>
+								<div class="col-sm-8">
+									<select id="fil-tipo" class="custom-select custom-select-sm">
+										<option value="0">Todos</option>
+										<option value="1">Beneficiario</option>
+										<option value="2">Voluntario</option>
+										<option value="3">Comunidad</option>
+										<option value="4">COVID-19</option>
+										<option value="5">Becado</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-padecimiento" class="col-sm-4 col-form-label col-form-label-sm text-right">Padecimientos</label>
+								<div class="col-sm-8">
+									<select id="fil-padecimiento" class="custom-select custom-select-sm">
+										<option value="-1">Todos</option>
+										<option value="NINGUNO">NINGUNO</option>
+										<option value="OBESIDAD">OBESIDAD</option>
+										<option value="DIABETES">DIABETES</option>
+										<option value="HIPERTENSIÓN">HIPERTENSIÓN</option>
+										<option value="ENF. CARDIOVASCULARES">ENF. CARDIOVASCULARES</option>
+										<option value="DISLIPIDEMIAS">DISLIPIDEMIAS</option>
+										<option value="CÁNCER">CÁNCER</option>
+										<option value="ENF. HEMATOLÓGICAS">ENF. HEMATOLÓGICAS</option>
+										<option value="ENF. RENALES">ENF. RENALES</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group row m-b-10">
+								<label for="fil-visita" class="col-sm-4 col-form-label col-form-label-sm text-right">Dia Visita</label>
+								<div class="col-sm-8">
+									<select id="fil-visita" class="custom-select custom-select-sm">
+										<option value="0">Todos</option>
+										<option value="1">Lunes</option>
+										<option value="2">Martes</option>
+										<option value="3">Miercoles</option>
+										<option value="4">Jueves</option>
+										<option value="5">Viernes</option>
+										<option value="6">Sabado</option>
+									</select>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-inverse waves-effect waves-light m-r-20" data-dismiss="modal">Cerrar</button>
+						<button type="button" class="btn btn-info waves-effect waves-light" id="btnFiltrar">Aplicar filtros</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="frm-csv" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+		<div class="modal-dialog modal-xl" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title"><i class="mdi mdi-file-excel-box"></i> Exportar Excel</h4>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-sm-8">
+							<div class="card">
+								<div class="card-body">
+									<label class="inline custom-control custom-checkbox block mb-0 pull-right">
+										<input type="checkbox" id="chk-all" class="custom-control-input"> <span class="custom-control-label ml-0">Todos</span>
+									</label>
+									<h4 class="card-title">Seleccionar campos</h4>
+									<hr>
+									<div class="row">
+										<div class="col-md-6">
+											<div class="form-group mb-0">
+												<div class="c-inputs-stacked">
+													<?php 
+													// $arrFields = array('CREDENCIAL','NOMBRE','PARENTESCO','DOMICILIO','VIALIDAD','ASENTAMIENTO','COLONIA','FECHA_NAC','EDAD','ESTADO_CIVIL','PADECIMIENTO','ESCOLARIDAD','OCUPACION','TIPO_OCUPACION','SEXO','PESO','TALLA','CINTURA','IMC','EMPLEO','DIA_VISITA','VIVIENDA_ZONA','CASA','VIVIENDA_TIPO','PAREDES','TECHO','PISO','LUZ','DRENAJE','BANIO','COMBUSTIBLE','AGUA','CURP','FECHA_INGRESO','ESTATUS','TIPO_REGISTRO','NUMERO_TELEFONO','MUNICIPIO','OBSERVACIONES','BAJAS','NIVEL_NECESIDAD','INGRESOS','EGRESOS');
+													// $arrFields = array('CREDENCIAL','NOMBRE','PARENTESCO','DOMICILIO','COLONIA','FECHA_NAC','EDAD','ESTADO_CIVIL','PADECIMIENTO','ESCOLARIDAD','OCUPACION','TIPO_OCUPACION','SEXO','PESO','TALLA','CINTURA','IMC','EMPLEO','DIA_VISITA','HUEVO','PROTEINA_ANIMAL','CARBOHIDRATOS','BASICOS','AZUCARES','LACTEOS','ACEITES_GRASAS','FRUTA_VERDURA','COMIDA_FUERA','COMIDA_COMPRADA','VIVIENDA_ZONA','CASA','VIVIENDA_TIPO','PAREDES','TECHO','PISO','LUZ','COMBUSTIBLE','AGUA','CURP','FECHA_INGRESO','ESTATUS','TIPO_REGISTRO','NUMERO_TELEFONO','MUNICIPIO','OBSERVACIONES','BAJAS','NIVEL_NECESIDAD','INGRESOS','EGRESOS','TICKET_1','TICKET_2','TICKET_3','TICKET_4');
+													$arrFields = array('CREDENCIAL','NOMBRE','PARENTESCO','DOMICILIO','COLONIA','FECHA_NAC','EDAD','ESTADO_CIVIL','PADECIMIENTO','ESCOLARIDAD','OCUPACION','TIPO_OCUPACION','SEXO','PESO','TALLA','CINTURA','IMC','EMPLEO','DIA_VISITA','HUEVO','PROTEINA_ANIMAL','CARBOHIDRATOS','BASICOS','AZUCARES','LACTEOS','ACEITES_GRASAS','FRUTA_VERDURA','COMIDA_FUERA','COMIDA_COMPRADA','VIVIENDA_ZONA','CASA','SERVICIOS','CURP','FECHA_INGRESO','ESTATUS','TIPO_REGISTRO','NUMERO_TELEFONO','MUNICIPIO','OBSERVACIONES','BAJAS','NIVEL_NECESIDAD','INGRESOS','TICKET_1','TICKET_2','TICKET_3','TICKET_4','FOLIO_SIGO');
+													for ($i=0; $i < 23; $i++) : ?>
+													<label class="inline custom-control custom-checkbox block mb-0">
+														<input type="checkbox" name="chk-campo" class="custom-control-input" value="<?= $arrFields[$i] ?>"> <span class="custom-control-label ml-0"><?= $arrFields[$i] ?></span>
+													</label>
+													<?php endfor; ?>
+												</div>
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="form-group">
+												<div class="c-inputs-stacked">
+													<?php for ($i=23; $i < count($arrFields); $i++) : ?>
+													<label class="inline custom-control custom-checkbox block mb-0">
+														<input type="checkbox" name="chk-campo" class="custom-control-input" value="<?= $arrFields[$i] ?>"> <span class="custom-control-label ml-0"><?= $arrFields[$i] ?></span>
+													</label>
+													<?php endfor; ?>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-4">
+							<div class="card">
+								<div class="card-body">
+									<h4 class="card-title">Ordenar campos</h4>
+									<hr>
+									<div id="grid-fields"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<table class="table table-sm table-hover table-striped">
+						<thead></thead>
+						<tbody></tbody>
+					</table>
+				</div>
+				<div class="modal-footer">
+					<!-- <button type="button" class="btn btn-primary">Previsualizar</button> -->
+					<button type="button" class="btn btn-info" id="btnExportar">Exportar</button>
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal" id="frm-salario">
+		<div class="modal-dialog modal-lg">
+				<div class="modal-content d-flex p-2">
+					<div class="modal-header">
+						<h3 class="modal-title">Beneficiarios</h3>
+					</div>
+					<div class="modal-body">
+						<form class="form p-t-20">
+							<div class="form-group">
+								<div class="row">
+									<div class="col-sm-6">
+										<label for="item-salario">Salario Mínimo</label>
+										<div class="input-group">
+											<div class="input-group-prepend">
+												<span class="input-group-text">$</span>
+											</div>
+											<input type="number" class="form-control text-right" id="item-salario" placeholder="Salario Mínimo">
+										</div>
+									</div>
+									<div class="col-sm-6">
+										<label for="item-limitesal">Límite salarial</label>
+										<div class="input-group">
+											<div class="input-group-prepend">
+												<span class="input-group-text">$</span>
+											</div>
+											<input type="number" class="form-control text-right" id="item-limitesal" placeholder="Límite salarial">
+										</div>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer d-flex justify-content-end">
+						<button type="submit" class="btn btn-inverse waves-effect waves-light m-r-20" data-dismiss="modal">Cancelar</button>
+						<button type="submit" class="btn btn-success waves-effect waves-light" id="btnSave">Guardar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	<?php include 'footer.phtml';?>
+	<script src="<?= URL_ROOT ?>/assets/plugins/wizard/jquery.steps.min.js"></script>
+    <script src="<?= URL_ROOT ?>/assets/plugins/wizard/jquery.validate.min.js"></script>
+	<script src="https://sortablejs.github.io/Sortable/Sortable.js"></script>
+	<script type="text/javascript">
+		$(function() {
+			$('#mnu-bene').addClass('active');
+			$apiUrl = '<?= URL_API ?>';
+			$curp 	= false;
+			$nombre = "";
+			$paterno = "";
+			$materno = "";
+
+			getItems();
+			function getItems() { 
+				blockPage();
+				filtros = {};
+				$.each($('#frm-filtros select'), function (index, elem) { 
+					ide = $(elem).attr('id').replace('fil-','');
+					filtros[ide] = $(elem).val();
+				});
+				selectedColumns = $('#columns-tbl-items').val(); cleanTable('tbl-items'); $('#tbl-items tbody').empty();
+				createTable('tbl-items', true, filtros, null);
+			}
+
+			$('#btnFiltrar').click(function(){ getItems(); $('#frm-filtros').modal('hide'); });
+		
+			<?php if(in_array(MOD_BENE_ADD, $permisos)) : ?>
+				$('#btnAdd').click(function(e) { e.preventDefault();
+					$('#frm-item input, #frm-item textarea').val('');
+					$.each($('#frm-item select'), function (i, elem) { 
+						$(elem).val($(elem).find('option:first').val());
+					});
+					$('#item-fecha_solicitud').val('<?= date('Y-m-d') ?>');
+					$('#frm-item').modal('show');
+				});
+
+				$(".tit-wizard").steps({
+					headerTag: "h6",
+					bodyTag: "section",
+					transitionEffect: "slide",
+					transitionEffectSpeed: 500,
+					enableFinishButton: false,
+					titleTemplate: '<span class="step">#index#</span> #title#',
+					labels: {
+						finish: "Guardar registro", 
+						next: "Siguiente",
+						previous: "Anterior",
+					}, 
+					/* onStepChanging: function (event, currentIndex, newIndex){
+						if(currentIndex == 0){
+							if($('#item-nombre').val() == '')
+						}
+						return true;
+					}, */
+					// onFinished: function (event, currentIndex) {
+					// 	event.preventDefault();
+					// 	var form = $(this);
+					// 	data = {};
+					// 	$.each($('#frm-item input, #frm-item select'), function (index, elem) { 
+					// 		ide = $(elem).attr('id').replace('item-','');
+					// 		data[ide] = $.trim($(elem).val());
+					// 	});
+					// 	data.observaciones = $.trim($('#item-observaciones').val());
+					// 	var seguro = "0";
+					// 	if(document.getElementById("chkSeguro").checked==true){
+					// 		seguro = "1";
+					// 	}
+					// 	data.seguro_social = seguro;
+
+					// 	$nombre 	= document.getElementById('item-nombre').value;
+					// 	$paterno 	= document.getElementById('item-apaterno').value;
+					// 	$materno 	= document.getElementById('item-amaterno').value;
+					// 	$curpValue 	= document.getElementById('item-curp').value;
+
+					// 	if($nombre!="" && $paterno!="" && $materno!=""){
+					// 		$('#item-nombre').removeClass('is-invalid');
+					// 		$('#item-apaterno').removeClass('is-invalid');
+					// 		$('#item-amaterno').removeClass('is-invalid');
+					// 		if($curpValue!=""){
+					// 			$('#item-curp').removeClass('is-invalid');
+
+					// 			$.get($apiUrl+"integrante/findByNombre/"+$nombre+"/"+$paterno+"/"+$materno, 
+					// 				function (resp) {
+					// 					if(resp.response){
+					// 							if($curp){
+					// 								$('#item-nombre').addClass('is-invalid');
+					// 								$('#item-apaterno').addClass('is-invalid');
+					// 								$('#item-amaterno').addClass('is-invalid');
+					// 								$('#item-curp').addClass('is-invalid');
+					// 								swal({ type:"warning", title:"Oops!", text:"Nombre y CURP ya estan registrados", timer:3000 });
+					// 							}else{
+					// 								$.post("titular/add/", data,
+					// 									function (resp) {
+					// 										if(resp.response){
+					// 											swal({ type:"success", title:"Guardar registro", text:'Se guardaron los datos correctamente', timer:3000 });
+					// 											location.href = '<?= URL_ROOT ?>/titular/'+resp.result;
+					// 										}else{
+					// 											swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+					// 										}
+					// 										$.unblockUI();
+					// 									},
+					// 									"json"
+					// 								);
+					// 							}
+					// 					}else{
+					// 						$.post("titular/add/", data,
+					// 								function (resp) {
+					// 									if(resp.response){
+					// 										swal({ type:"success", title:"Guardar registro", text:'Se guardaron los datos correctamente', timer:3000 });
+					// 										location.href = '<?= URL_ROOT ?>/titular/'+resp.result;
+					// 									}else{
+					// 										swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+					// 									}
+					// 									$.unblockUI();
+					// 								},
+					// 								"json"
+					// 							);
+					// 					}
+					// 				},
+					// 				"json"
+					// 			);
+					// 		}else{
+					// 			if($curpValue==""){
+					// 				$('#item-curp').addClass('is-invalid');
+					// 			}
+					// 			swal({ type:"warning", title:"Oops!", text:"Verificar CURP", timer:3000 });
+					// 		}
+					// 	}else{
+					// 		if($nombre==""){
+					// 			$('#item-nombre').addClass('is-invalid');
+					// 		}
+					// 		if($paterno==""){
+					// 			$('#item-apaterno').addClass('is-invalid');
+					// 		}
+					// 		if($materno==""){
+					// 			$('#item-amaterno').addClass('is-invalid');
+					// 		}
+					// 		swal({ type:"warning", title:"Oops!", text:"Verificar Nombre y Apellidos", timer:3000 });
+					// 	}
+					// }
+				});
+
+				$('#btnSaveUsuario').click(function(){
+					$('#btnSaveUsuario').prop('disabled', true);
+					event.preventDefault();
+					var form = $(this);
+					data = {};
+					$.each($('#frm-item input, #frm-item select'), function (index, elem) { 
+						ide = $(elem).attr('id').replace('item-','');
+						data[ide] = $.trim($(elem).val());
+					});
+					data.observaciones = $.trim($('#item-observaciones').val());
+					var seguro = "0";
+					if(document.getElementById("chkSeguro").checked==true){
+						seguro = "1";
+					}
+					data.seguro_social = seguro;
+
+					$nombre 	= document.getElementById('item-nombre').value;
+					$paterno 	= document.getElementById('item-apaterno').value;
+					$materno 	= document.getElementById('item-amaterno').value;
+					$curpValue 	= document.getElementById('item-curp').value;
+
+					if($nombre!="" && $paterno!="" && $materno!=""){
+						$('#item-nombre').removeClass('is-invalid');
+						$('#item-apaterno').removeClass('is-invalid');
+						$('#item-amaterno').removeClass('is-invalid');
+						if($curpValue!=""){
+							$('#item-curp').removeClass('is-invalid');
+
+							$.get($apiUrl+"integrante/findByNombre/"+$nombre+"/"+$paterno+"/"+$materno, 
+								function (resp) {
+									if(resp.response){
+											if($curp){
+												$('#item-nombre').addClass('is-invalid');
+												$('#item-apaterno').addClass('is-invalid');
+												$('#item-amaterno').addClass('is-invalid');
+												$('#item-curp').addClass('is-invalid');
+												swal({ type:"warning", title:"Oops!", text:"Nombre y CURP ya estan registrados", timer:3000 });
+												$("#btnSaveUsuario").removeAttr('disabled');
+											}else{
+												$.post("titular/add/", data,
+													function (resp) {
+														if(resp.response){
+															swal({ type:"success", title:"Guardar registro", text:'Se guardaron los datos correctamente', timer:3000 });
+															location.href = '<?= URL_ROOT ?>/titular/'+resp.result;
+															$("#btnSaveUsuario").removeAttr('disabled');
+														}else{
+															swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+															$("#btnSaveUsuario").removeAttr('disabled');
+														}
+														$.unblockUI();
+													},
+													"json"
+												);
+											}
+									}else{
+										$.post("titular/add/", data,
+												function (resp) {
+													if(resp.response){
+														swal({ type:"success", title:"Guardar registro", text:'Se guardaron los datos correctamente', timer:3000 });
+														location.href = '<?= URL_ROOT ?>/titular/'+resp.result;
+														$("#btnSaveUsuario").removeAttr('disabled');
+													}else{
+														swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+														$("#btnSaveUsuario").removeAttr('disabled');
+													}
+													$.unblockUI();
+												},
+												"json"
+										);
+									}
+								},
+								"json"
+							);
+						}else{
+							if($curpValue==""){
+								$('#item-curp').addClass('is-invalid');
+							}
+							swal({ type:"warning", title:"Oops!", text:"Verificar CURP", timer:3000 });
+							$("#btnSaveUsuario").removeAttr('disabled');
+						}
+					}else{
+						if($nombre==""){
+							$('#item-nombre').addClass('is-invalid');
+						}
+						if($paterno==""){
+							$('#item-apaterno').addClass('is-invalid');
+						}
+						if($materno==""){
+							$('#item-amaterno').addClass('is-invalid');
+						}
+						swal({ type:"warning", title:"Oops!", text:"Verificar Nombre y Apellidos", timer:3000 });
+						$("#btnSaveUsuario").removeAttr('disabled');
+					}
+				});
+
+				$('#item-curp').change(function(){
+					curp = $.trim($(this).val().toUpperCase());
+					if(curp != ''){
+						$.get($apiUrl+"integrante/findByCURP/"+curp, 
+							function (resp) {
+								if(resp.response){
+									$curp = true;
+									$('#item-curp').removeClass('is-valid');
+									$('#item-curp').addClass('is-invalid');
+								}else{
+									$curp = false;
+									$('#item-curp').removeClass('is-invalid');
+									$('#item-curp').addClass('is-valid');
+								}
+							},
+							"json"
+						);
+					}
+				});
+
+				$('#item-nombre').change(function(){
+					$('#item-nombre').removeClass('is-invalid');
+				});
+
+				$('#item-apaterno').change(function(){
+					$('#item-apaterno').removeClass('is-invalid');
+				});
+
+				$('#item-amaterno').change(function(){
+					$('#item-amaterno').removeClass('is-invalid');
+				});
+
+				$('#item-credencial').change(function(){
+					credencial = $.trim($(this).val());
+					if(credencial != ''){
+						$.get($apiUrl+"titular/findBy/credencial/"+credencial, 
+							function (resp) {
+								if(resp.length > 0){
+									$('#item-credencial').addClass('is-invalid');
+								}else{
+									$('#item-credencial').addClass('is-valid');
+								}
+							},
+							"json"
+						);
+					}
+				});
+
+				$('#item-apaterno, #item-amaterno, #item-nombre, #item-fk_municipio, #item-fecha_solicitud, #item-fecha_nacimiento').change(function(){ genCred(); /* genCurp(); */ });
+
+				function genCred(){
+					var apaterno = $.trim($('#item-apaterno').val()).toUpperCase();
+					var amaterno = $.trim($('#item-amaterno').val()).toUpperCase();
+					var nombre = $.trim($('#item-nombre').val()).toUpperCase();
+					var muni = $.trim($('#item-fk_municipio option:selected').text()).toUpperCase();
+					muni = muni.replace(/(^\s*)|(\s*$)|[ ]/g, "");
+					var fecha = $('#item-fecha_solicitud').val();
+					fecha = fecha.split('-');
+
+					var cred = apaterno.substring(0, 2);
+					cred += amaterno.substring(0, 1);
+					cred += nombre.substring(0, 1);
+					cred += fecha[1];
+					cred += fecha[0].substring(2);
+					cred += muni.substring(0, 6);
+					$("#item-credencial").val(cred);
+				}
+
+				function genCurp(){
+					var apaterno = $.trim($('#item-apaterno').val()).toUpperCase();
+					var amaterno = $.trim($('#item-amaterno').val()).toUpperCase();
+					var nombre = $.trim($('#item-nombre').val()).toUpperCase();
+					var fecha = $('#item-fecha_nacimiento').val() != '' ? $('#item-fecha_nacimiento').val() : '--';
+					fecha = fecha.split('-');
+
+					var curp = apaterno.substring(0, 2);
+					curp += amaterno.substring(0, 1);
+					curp += nombre.substring(0, 1);
+					curp += fecha[0].substring(2);
+					curp += fecha[1];
+					curp += fecha[2];
+
+					$("#item-curp").val(curp);
+				}
+			<?php endif; ?>
+
+			<?php if(in_array(MOD_BENE_DEL, $permisos)): ?>
+				$('tbody').on('click', '.btnDel', function(event) { event.preventDefault();
+					tr = $(this).parents('tr');
+					id = tr.data('tit');
+					nom = tr.find('.nombre').text();
+					swal({ title:"Eliminar beneficiario", text:"No podrá restaurar al beneficiario <strong>"+nom+"</strong>", type:"warning", html:true, showCancelButton:true, cancelButtonText:"Cancelar", confirmButtonColor:"#DD6B55", confirmButtonText:"Si, eliminar", closeOnConfirm:false }, 
+						function() {
+							blockPage();
+							$.ajax({ url:$apiUrl+'titular/del/'+id, type:'PUT', dataType:'json', success:
+								function(resp) {
+									if(resp.response) {
+										getItems();
+										swal({ type:"success", title:"¡Listo!", text:"Se eliminó el beneficiario", timer:4000 });
+									} else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); }
+									$.unblockUI();
+								}
+							});
+						}
+					);
+				});
+			<?php endif; ?>
+
+			<?php if(in_array(MOD_BENE_BAJA, $permisos)) : ?>
+				$('tbody').on('click', '.btnStat', function(event) { event.preventDefault();
+					element = $(this);
+					tr = element.parents('tr');
+					id = tr.data('tit');
+					nom = tr.find('.nombre').text();
+					status = $(this).data('nuevo');
+					titulo = status == 1 ? 'Dar de alta': 'Dar de baja';
+					swal({ title:titulo+" beneficiario", text:"¿Desea "+titulo+" al beneficiario <strong>"+nom+"</strong>?", type:"warning", html:true, showCancelButton:true, cancelButtonText:"Cancelar", confirmButtonColor:"#DD6B55", confirmButtonText:"Si, "+titulo, closeOnConfirm:true }, 
+						function() { blockPage();
+							$.ajax({ url:$apiUrl+'titular/changeStatus/'+id, type:'PUT', dataType:'json', data:{estatus:status}, }).done(
+								function(resp) {
+								if(resp.response) {
+									getItems();
+								} else { swal({ type:"warning", title:"Oops!", text:resp.message, timer:4000 }); }
+
+								$.unblockUI();
+						});
+					});
+				});
+			<?php endif; ?>
+
+			function cleanTable(tbl) {
+				if($.fn.dataTable.isDataTable('#'+tbl)) {
+					table = $('#'+tbl).DataTable();
+					table.destroy();
+				}
+				$("#nodata").remove();
+			}
+
+			function createTable(tbl, paging, filtros, arrColumns=null) {
+				container = $('<div class="form-inline pull-right" style="overflow: visible"></div>');
+				select = $('<select class="selectpicker" multiple data-selected-text-format="static" id="columns-'+tbl+'" title="Mostrar/Ocultar columnas" data-width="fit"></select>').appendTo(container);
+				opt = ['Credencial','Nombre','Parentesco','Edad','Nacimiento','Sexo','Teléfono','Escolaridad','Peso/IMC','Colonia','Municipio','Status'];				
+				$.each(opt, function (index, value) { 
+					select.append('<option class="form-control-sm" value="'+index+'">'+value+'</option>');
+				});
+				select.selectpicker('val', arrColumns!=null? arrColumns: Array.from(Array(12).keys()));
+				searchContainer = $('<div class="input-group"></div>').appendTo(container);
+				search = $('<input type="text" id="bus" placeholder="Buscar nombre o credencial" class="form-control">').appendTo(searchContainer);
+				icon = $('<div class="input-group-append"><span class="input-group-text"><i class="fa fa-search"></i></span></div>').appendTo(searchContainer);
+
+				$('#'+tbl).dataTable({
+					scrollX: false,
+					paging: paging,
+					pagingType: "full_numbers",
+					dom: 'Rl<"#toolbar-'+tbl+'">frtip',
+					"columnDefs": [
+						{"orderable": true, "targets": [0], "visible": ($.inArray("0", select.val())>=0), "className": '', "data": 'credencial'},
+						{"orderable": true, "targets": [1], "visible": ($.inArray("1", select.val())>=0), "className": '', "data": 'nombre_completo'},
+						{"orderable": true, "targets": [2], "visible": ($.inArray("2", select.val())>=0), "className": '', "data": 'parentesco'},
+						{"orderable": true, "targets": [3], "visible": ($.inArray("3", select.val())>=0), "className": 'text-center', "data": 'edad'},
+						{"orderable": true, "targets": [4], "visible": ($.inArray("4", select.val())>=0), "className": 'text-center', "data": 'fecha_nacimiento'},
+						{"orderable": true, "targets": [5], "visible": ($.inArray("5", select.val())>=0), "className": 'text-center', "data": 'sexo'},
+						{"orderable": true, "targets": [6], "visible": ($.inArray("6", select.val())>=0), "className": 'text-center', "data": 'numero_telefono'},
+						{"orderable": true, "targets": [7], "visible": ($.inArray("7", select.val())>=0), "className": 'escuela', "data": 'escolaridad'},
+						{"orderable": true, "targets": [8], "visible": ($.inArray("8", select.val())>=0), "className": '', "data": 'peso'},
+						{"orderable": true, "targets": [9], "visible": ($.inArray("9", select.val())>=0), "className": '', "data": 'colonia'},
+						{"orderable": true, "targets": [10], "visible": ($.inArray("10", select.val())>=0), "className": 'muni', "data": 'fk_municipio'},
+						{"orderable": true, "targets": [11], "visible": ($.inArray("11", select.val())>=0), "className": 'text-center', "data": 'estatus'},
+						{"orderable": false, "targets": [12], "className": 'text-center', "data": 'acciones'},
+					],
+					'order': [[11, 'asc'], [0, 'asc']],
+					'lengthMenu': [[20,50,100,200],[20,50,100,200]],
+					'processing': true,
+					'serverSide': true,
+					'ajax': {
+						url: $apiUrl+'titular/getAllInteAjax/0/0/0/_',
+						type: 'GET',
+						data: filtros, 
+					},
+					createdRow: function(row, data, dataIndex) {
+						$(row).attr('data-id', data.id_integrante);
+						$(row).attr('data-tit', data.fk_titular);
+						escuela = $('#fil-escolaridad option[value="'+data.escolaridad+'"]').text();
+						muni = $('#fil-fk_municipio option[value="'+data.fk_municipio+'"]').text();
+						$(row).find('.escuela').html('<small>'+escuela+'</small>');
+						$(row).find('.muni').html('<small>'+muni+'</small>');
+					}, 
+					drawCallback: function(settings){
+						$.unblockUI();
+					}
+				});
+
+				$('#toolbar-'+tbl).html(container);
+				$('#toolbar-'+tbl+' #bus').keyup(function(e) { $("#"+tbl+"_filter label input").val($.trim($(this).val())).trigger('keyup'); });
+				$("#toolbar-"+tbl+" #bus").on("search", function(evt) { $("#"+tbl+"_filter label input").val(undefined).trigger('keyup'); });
+				$("#toolbar-"+tbl+" #btn-bus").click(function(evt) { evt.preventDefault(); $("#"+tbl+"_filter label input").val($.trim($('#bus').val())).trigger('keyup'); });
+				select.on('changed.bs.select', function(e, index) { blockPage();
+					column = $('#'+tbl).DataTable().column(index);
+					column.visible(!column.visible());
+					$.unblockUI();
+				});
+				$("#"+tbl+"_filter label").hide();
+			}
+
+			var gridFields = document.getElementById('grid-fields');
+			new Sortable(gridFields, {
+				animation: 150,
+				ghostClass: 'blue-background-class'
+			});
+
+			$('#chk-all').click(function(){
+				if($(this).is(':checked')){
+					$('#grid-fields').empty();
+					$('[name="chk-campo"]').prop('checked', false).trigger('click');
+				}else{
+					$('[name="chk-campo"]').trigger('click');
+				}
+			});
+
+			$('[name="chk-campo"]').click(function(){
+				f = $(this).val();
+				if($(this).is(':checked')){
+					item = $('<div class="grid-item">'+f+'</div>');
+					$('#grid-fields').append(item);
+				}else{
+					$('#chk-all').prop('checked', false);
+					$.each($('.grid-item'), function (ind, elem) { 
+						if($(elem).text() == f) { $(elem).remove(); return false; }
+					});
+				}
+			});
+
+			$('#btnExportar').click(function(){
+				$('.invalid-tooltip').remove();
+				campos = [];
+				$.each($('.grid-item'), function (ind, elem) { 
+					campos.push($(elem).text());
+				});
+				if(campos.length == 0){
+					$errLabel = $('<div class="invalid-tooltip"></div>');
+					$errLabel.html('Debe seleccionar al menos un campo');
+					$('#btnExportar').after($errLabel);
+					$errLabel.show();
+				}else{
+					swal({ type:"success", title:"Exportando a Excel", text:"El proceso de Exportación puede demorar varios minutos. Por favor sea paciente hasta que se complete el proceso.", timer:6000 });
+					window.open('<?= URL_ROOT ?>/titular/getExcel/'+campos.toString())
+				}
+			});
+
+			function LimpiarSalario(){
+				$("#item-salario").val("");
+				$("#item-limitesal").val("");
+			}
+
+			function getSalario(){
+				$.ajax({
+					url: $apiUrl+'titular/getSalario/',
+					type: 'GET',
+					dataType: 'json'
+				}).done(function(resp) {
+					if(!resp.response){
+						LimpiarSalario();
+					}else{
+						LimpiarSalario();
+						$("#item-salario").val(resp.result.salario_minimo);
+						$("#item-limitesal").val(resp.result.limite_salarial);
+						// document.getElementById('parti-nomcomp').innerHTML= resp.result.nombre+" "+resp.result.paterno+" "+resp.result.materno;
+					}
+				});
+			}
+
+			<?php if(in_array(MOD_BENE_SALARIO_EDIT, $permisos)) : ?>
+			$('#btnSalario').click(function(){
+				getSalario();
+				$('#frm-salario').modal('show');
+			});
+			<?php endif; ?>
+
+			$('#btnSave').click(function() {
+				$('.invalid-tooltip').remove();
+				data = {};
+
+				salari = parseFloat(document.getElementById('item-salario').value);
+				limitsalari = parseFloat(document.getElementById('item-limitesal').value);
+				data["salario_minimo"] = salari.toFixed(2);
+				data["limite_salarial"] = limitsalari.toFixed(2);
+
+				$errLabel = $('<div class="invalid-tooltip"></div>');
+				if(document.getElementById('item-salario').value == '') {
+					$errLabel.html('Debe ingresar el Salario Mínimo');
+					$('#item-salario').focus().after($errLabel);
+					$errLabel.show();
+				}else if(document.getElementById('item-limitesal').value == '') {
+					$errLabel.html('Debe ingresar el Límite salarial');
+					$('#item-limitesal').focus().after($errLabel);
+					$errLabel.show();
+				} else {
+					blockPage();
+					$.ajax({
+						type: 'PUT',
+						url: $apiUrl+'titular/editSalario/',
+						data: data,
+						dataType: "json",
+						success: function (resp) {
+							if(resp.response){
+								$('#frm-salario').modal('hide');
+								swal({ type: "success", title: "¡Listo!", text: "Se guardaron los datos correctamente.", timer: 4000 });
+							}else{
+								swal({ type: "warning", title: "Oops!", text: resp.message, timer: 4000 }); 
+							}
+							$.unblockUI();
+						}
+					});
+				}
+			});
+		});
+	</script>
+	<?php else: include 'footer.phtml'; endif; ?>
