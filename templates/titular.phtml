@@ -1,7 +1,7 @@
 <?php 
 	include 'header.phtml';
 
-	$visita = array('','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado');
+	$visita = array('Todos','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado');
 	$civil = array('','Soltero', 'Casado', 'Divorciado', 'Viudo', 'Unión Libre', 'Separado', 'Madre Soltera');
 	$escuela = array('No Aplica', 'Analfabeto', 'Alfabeto', 'Preescolar', 'Primaria', 'Secundaria', 'Preparatoria', 'Carrera técnica con primaria completa', 'Carrera técnica con secundaria completa', 'Carrera técnica con preparatoria completa', 'Licenciatura');
 	$otro = array('Otros', 'Prospera', 'Despensa', 'Ninguno','Pensión Alimenticia','Pensión Gobierno','Remesa');
@@ -60,6 +60,7 @@
 				<div class="card">
 					<div class="card-body wizard-content">
 						<form action="#" id="tit-wizard" class="vertical wizard-circle">
+						<!--
 							<h6>Alimentos</h6>
 							<section>
 								<div class="row">
@@ -323,9 +324,10 @@
 										</div>
 									</div>
 									<br><br><br><br><br><br><br>
-								</div> -->
-							</section>
+								</div> -- > aqui estaba comentado
+							</section>-->
 							
+							<!--
 							<h6>Vivienda</h6>
 							<section>
 								<div class="row">
@@ -383,75 +385,9 @@
 												<option value="7" <?= ($vivienda==""? '' : $vivienda->paredes == 7) ? 'selected' : '' ?>>Otros</option>
 											</select>
 										</div>
-									</div> -->
+									</div> -- > aqui estaba junto
 								</div>
 								<div class="row">		
-									<!-- <div class="col-md-6">
-										<div class="form-group">
-											<label for="vivienda-techo">Techo:</label>
-											<select class="custom-select form-control" id="vivienda-techo">
-												<option value="0" <?= ($vivienda==""? '' : $vivienda->techo == 0) ? 'selected' : '' ?>>Seleccione</option>
-												<option value="1" <?= ($vivienda==""? '' : $vivienda->techo == 1) ? 'selected' : '' ?>>Concreto, losa, viguetas</option>
-												<option value="2" <?= ($vivienda==""? '' : $vivienda->techo == 2) ? 'selected' : '' ?>>Lámina de cartón, desecho</option>
-												<option value="3" <?= ($vivienda==""? '' : $vivienda->techo == 3) ? 'selected' : '' ?>>Lámina asbesto, metálica</option>
-												<option value="4" <?= ($vivienda==""? '' : $vivienda->techo == 4) ? 'selected' : '' ?>>Madera, teja</option>
-												<option value="5" <?= ($vivienda==""? '' : $vivienda->techo == 5) ? 'selected' : '' ?>>Paja o palma</option>
-												<option value="6" <?= ($vivienda==""? '' : $vivienda->techo == 6) ? 'selected' : '' ?>>Otros</option>
-											</select>
-										</div>
-										<div class="form-group">
-											<label for="vivienda-piso">Piso:</label>
-											<select class="custom-select form-control" id="vivienda-piso">
-												<option value="0" <?= ($vivienda==""? '' : $vivienda->piso == 0) ? 'selected' : '' ?>>Seleccione</option>
-												<option value="1" <?= ($vivienda==""? '' : $vivienda->piso == 1) ? 'selected' : '' ?>>Madera, duela</option>
-												<option value="2" <?= ($vivienda==""? '' : $vivienda->piso == 2) ? 'selected' : '' ?>>Mosaico, vinil</option>
-												<option value="3" <?= ($vivienda==""? '' : $vivienda->piso == 3) ? 'selected' : '' ?>>Cemento o firme</option>
-												<option value="4" <?= ($vivienda==""? '' : $vivienda->piso == 4) ? 'selected' : '' ?>>Tierra</option>
-												<option value="5" <?= ($vivienda==""? '' : $vivienda->piso == 5) ? 'selected' : '' ?>>Otros</option>
-											</select>
-										</div>
-										<br>
-									</div> -->
-									<!-- <div class="col-md-6">
-										<div class="form-group">
-											<label for="vivienda-electrodomesticos">En su casa tiene:</label>
-											<div class="c-inpuxts-stacked">
-												<div class="form-check form-check-inline">
-													<input type="checkbox" name="chk-electro" value="T" class="form-check-input" id="chkTv" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'T') !== false ? 'checked' : '' ?>>
-													<label class="form-check-label" for="chkTv">Televisión</label>
-												</div>
-												<div class="form-check form-check-inline">
-													<input type="checkbox" name="chk-electro" value="R" class="form-check-input" id="chkRef" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'R') !== false ? 'checked' : '' ?>>
-													<label class="form-check-label" for="chkRef">Refrigerador</label>
-												</div>
-												<div class="form-check form-check-inline">
-													<input type="checkbox" name="chk-electro" value="L" class="form-check-input" id="chkLav" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'L') !== false ? 'checked' : '' ?>>
-													<label class="form-check-label" for="chkLav">Lavadora</label>
-												</div>
-												<div class="form-check form-check-inline">
-													<input type="checkbox" name="chk-electro" value="M" class="form-check-input" id="chkMic" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'M') !== false ? 'checked' : '' ?>>
-													<label class="form-check-label" for="chkMic">Horno de microondas</label>
-												</div>
-												<div class="form-check form-check-inline">
-													<input type="checkbox" name="chk-electro" value="E" class="form-check-input" id="chkEst" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'E') !== false ? 'checked' : '' ?>>
-													<label class="form-check-label" for="chkEst">Estereo</label>
-												</div>
-												<div class="form-check form-check-inline">
-													<input type="checkbox" name="chk-electro" value="D" class="form-check-input" id="chkDvd" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'D') !== false ? 'checked' : '' ?>>
-													<label class="form-check-label" for="chkDvd">DVD</label>
-												</div>
-												<div class="form-check form-check-inline">
-													<input type="checkbox" name="chk-electro" value="F" class="form-check-input" id="chkEstu" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'F') !== false ? 'checked' : '' ?>>
-													<label class="form-check-label" for="chkEstu">Estufa</label>
-												</div>
-												<div class="form-check form-check-inline">
-													<input type="checkbox" name="chk-electro" value="C" class="form-check-input" id="chkComp" <?= strpos($vivienda==""? '' : $vivienda->electrodomesticos,'C') !== false ? 'checked' : '' ?>>
-													<label class="form-check-label" for="chkComp">Computadora</label>
-												</div>
-											</div>
-											<input type="text" class="form-control form-control-sm" id="vivienda-otro_electro" placeholder="Otro electrodomestico" value="<?= $vivienda==""?"":$vivienda->otro_electro ?>">
-										</div>
-									</div> -->
 									<div class="col-md-6">
 										<div class="form-group">
 											<label for="vivienda-electrodomesticos">Electrodomésticos (TV, Refrigerador, Lavadora, Horno, Estufa) :</label>
@@ -493,10 +429,12 @@
 									</div>
 								</div>
 								<br><br><br><br><br><br>
-							</section>
+							</section> -->
 
 							<h6>Observaciones</h6>
 							<section>
+								<input type="hidden" id="vivienda-id" value="<?= $vivienda==""?0:$vivienda->id_vivienda ?>">
+								<input type="hidden" id="gasto-id" value="<?= $gastos==""?0:$gastos->id_egresos ?>">
 								<div class="row">
 									<div class="col-md-4">
 										<div class="form-group">
@@ -563,6 +501,7 @@
 								</div>
 							</section>
 
+							<!--
 							<h6>Tickets</h6>
 							<section>
 								<div class="row">
@@ -621,6 +560,7 @@
 									<br><br><br><br><br><br><br><br>
 								</div>
 							</section>
+							-->
 						</form>
 					</div>
 				</div>
@@ -1066,6 +1006,7 @@
 										<div class="form-group">
 											<label for="item-fecha_visita">Día Visita</label>
 											<select class="custom-select form-control" id="item-fecha_visita" name="location">
+												<option value="0">Todos</option>
 												<option value="1">Lunes</option>
 												<option value="2">Martes</option>
 												<option value="3">Miercoles</option>
@@ -1972,7 +1913,18 @@
 						success: function (resp) {
 							if(resp.response){
 								$('#gasto-id').val(resp.result);
-								$.ajax({
+								
+								// se agrego para solo egresos
+								if(resp.response){
+									swal({ type:"success", title:"Guardar cambios", text:'Se guardaron los datos correctamente', timer:3000 }, function () {
+									window.location.reload();
+									});
+								}else{
+									swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
+								}
+								$.unblockUI();
+
+								/*$.ajax({
 									type: (vivienda.id==0?'post':'put'),
 									url: $apiUrl+"vivienda/"+(vivienda.id==0?'add/':'edit/'+vivienda.id),
 									data: vivienda,
@@ -1988,7 +1940,8 @@
 										}
 										$.unblockUI();
 									}
-								});
+								});*/
+
 							}else{
 								swal({ type:"warning", title:"Oops!", text:resp.message, timer:3000 });
 								$.unblockUI();
@@ -2049,10 +2002,10 @@
 						$('#item-nombre').removeClass('is-invalid');
 						$('#item-apaterno').removeClass('is-invalid');
 						$('#item-amaterno').removeClass('is-invalid');
-						if($curpValue!=""){
+						//if($curpValue!=""){
 							$('#item-curp').removeClass('is-invalid');
 
-							$.get($apiUrl+"integrante/findByNombre/"+$nombre+"/"+$paterno+"/"+$materno, 
+							/*$.get($apiUrl+"integrante/findByNombre/"+$nombre+"/"+$paterno+"/"+$materno, 
 									function (resp) {
 										if(resp.response){
 												if($curp){
@@ -2096,7 +2049,7 @@
 														}
 													});
 												}
-										}else{
+										}else{*/
 											$.ajax({
 												type: 'put',
 												url: $apiUrl+"titular/edit/<?= $info->id_titular ?>",
@@ -2112,16 +2065,16 @@
 													$.unblockUI();
 												}
 											});
-										}
-									},
-									"json"
-								);
-						}else{
+//										}
+//									},
+//									"json"
+//								);
+						/*}else{
 							if($curpValue==""){
 								$('#item-curp').addClass('is-invalid');
 							}
 							swal({ type:"warning", title:"Oops!", text:"Verificar CURP", timer:3000 });
-						}
+						}*/
 					}else{
 						if($nombre==""){
 							$('#item-nombre').addClass('is-invalid');
@@ -2137,7 +2090,7 @@
 				}
 			});
 
-			$('#frm-item').on('change','#item-curp',function(){
+			/*$('#frm-item').on('change','#item-curp',function(){
 				curp = $.trim($(this).val().toUpperCase());
 				if(curp != ''){
 					$.get($apiUrl+"integrante/findByCURP/"+curp, 
@@ -2155,7 +2108,7 @@
 						"json"
 					);
 				}
-			});	
+			});	*/
 
 			$('#frm-item').on('change','#item-nombre',function(){
 				$('#item-nombre').removeClass('is-invalid');

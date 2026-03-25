@@ -374,9 +374,9 @@
 				'colonia'=>$parsedBody['colonia'], 
 				'fk_municipio'=>$parsedBody['fk_municipio'], 
 				'estado_civil'=>$parsedBody['estado_civil'], 
-				'discapacidad'=>$parsedBody['discapacidad'], 
+				'discapacidad'=>$parsedBody['padecimiento'], 
 				'otro_apoyo'=>$parsedBody['otro_apoyo'], 
-				'ingreso_otro_apoyo'=>$parsedBody['ingreso_otro_apoyo'], 
+				'ingreso_otro_apoyo' => floatval($parsedBody['ingreso_otro_apoyo'] ?? 0),
 				// 'gasto_baceh'=>$parsedBody['gasto_baceh'], 
 				'gasto_baceh'=>'0', 
 				'observaciones'=>$parsedBody['observaciones'], 
@@ -416,10 +416,10 @@
 				'escolaridad'=>$parsedBody['escolaridad'], 
 				'ocupacion'=>$parsedBody['ocupacion'], 
 				'tipo_ocupacion'=>$parsedBody['tipo_ocupacion'], 
-				'ingreso'=>$parsedBody['ingreso'], 
+				'ingreso' => floatval($parsedBody['ingreso'] ?? 0),
 				'aporte_gasto'=>$parsedBody['aporte_gasto'], 
 				'padecimiento'=>$parsedBody['padecimiento'], 
-				'discapacidad'=>$parsedBody['discapacidad'], 
+				'discapacidad'=>$parsedBody['padecimiento'], 
 				'curp'=>$parsedBody['curp'],
 				'numero_telefono'=>$parsedBody['numero_telefono'],
 				'estado_civil'=>$parsedBody['estado_civil'], 
@@ -446,10 +446,10 @@
                 'fk_titular'=> $titular_id,
                 'enfermedades'=> $enfermedades,
                 'adulto_mayor'=> $mayor,
-				'sindrome'=>$parsedBody['sindrome'], 
-				'discapacidad'=>$parsedBody['discapacidad'], 
+				'sindrome'=>0, 
+				'discapacidad'=>0, 
 				'tipo_empleo'=>$parsedBody['tipo_empleo'], 
-				'transporte'=>$parsedBody['transporte'], 
+				'transporte'=>"", 
 				'tc'=>$parsedBody['tc'], 
 				// 'imagen'=>$parsedBody['imagen']
 				'ultima_consulta' => new Literal('NOW()'),
@@ -592,12 +592,12 @@
 				'estado_civil'=>$parsedBody['estado_civil'], 
 				'credencial'=>$parsedBody['credencial'], 
 				'fecha_visita'=>$parsedBody['fecha_visita'], 
-				'discapacidad'=>$parsedBody['discapacidad'], 
+				'discapacidad'=>0, 
 				// 'personas_depen'=>$parsedBody['personas_depen'], 
 				'personas_depen'=>0, 
 				'telefono'=>$parsedBody['telefono'], 
 				'otro_apoyo'=>$parsedBody['otro_apoyo'], 
-				'ingreso_otro_apoyo'=>$parsedBody['ingreso_otro_apoyo'], 
+				'ingreso_otro_apoyo' => floatval($parsedBody['ingreso_otro_apoyo'] ?? 0),
 				'observaciones'=>$parsedBody['observaciones'], 
 				'observaciones_asist'=>$parsedBody['observaciones_asist'], 
 				'actualizo'=>$parsedBody['actualizo'], 
@@ -630,8 +630,8 @@
 				'ocupacion'=>$parsedBody['ocupacion'], 
 				'tipo_ocupacion'=>$parsedBody['tipo_ocupacion'], 
 				'tipo_empleo'=>$parsedBody['tipo_empleo'], 
-				'ingreso'=>$parsedBody['ingreso'], 
-				'discapacidad'=>$parsedBody['discapacidad'], 
+				'ingreso' => floatval($parsedBody['ingreso'] ?? 0),
+				'discapacidad'=>0, 
 				'aporte_gasto'=>$parsedBody['aporte_gasto'], 
 				'numero_telefono'=>$parsedBody['numero_telefono'], 
 				'estado_civil'=>$parsedBody['estado_civil'], 
@@ -650,10 +650,10 @@
             $dataFichaTecnica = [
                 'enfermedades'=> $enfermedades,
                 'adulto_mayor'=> $mayor,
-				'sindrome'=>$parsedBody['sindrome'], 
-				'discapacidad'=>$parsedBody['discapacidad'], 
+				'sindrome'=>0, 
+				'discapacidad'=>0, 
 				'tipo_empleo'=>$parsedBody['tipo_empleo'], 
-				'transporte'=>$parsedBody['transporte'], 
+				'transporte'=>"", 
 				'tc'=>$parsedBody['tc'], 
 			];
             $ficha_tecnica = $this->model->ficha_tecnica->editByTit($dataFichaTecnica, $titular_id);
@@ -874,7 +874,7 @@
                     '7 - Carrera técnica con primaria completa','8 - Carrera técnica con secundaria completa',
                     '9 - Carrera técnica con preparatoria completa','10 - Licenciatura');
 				$arrEmp = array('Permanente','Propio Legal','No tiene','Temporal','Medio Tiempo','Informal');
-				$arrVisita = array('','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','');
+				$arrVisita = array('Todos','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','');
 				$arrZona = array('','Rural','Semi-urbana','Urbana');
 				$arrCasa = array('Propia','Prestada','Rentada','Pagandose','Asentamiento irregular','Otro');
 				$arrStatus = array('','Activo','Baja');

@@ -502,6 +502,7 @@
 										<div class="form-group">
 											<label for="item-fecha_visita">Día Visita</label>
 											<select class="custom-select form-control" id="item-fecha_visita" name="location">
+												<option value="0">Todos</option>
 												<option value="1">Lunes</option>
 												<option value="2">Martes</option>
 												<option value="3">Miercoles</option>
@@ -994,10 +995,10 @@
 						$('#item-nombre').removeClass('is-invalid');
 						$('#item-apaterno').removeClass('is-invalid');
 						$('#item-amaterno').removeClass('is-invalid');
-						if($curpValue!=""){
+						//if($curpValue!=""){
 							$('#item-curp').removeClass('is-invalid');
 
-							$.get($apiUrl+"integrante/findByNombre/"+$nombre+"/"+$paterno+"/"+$materno, 
+							/*$.get($apiUrl+"integrante/findByNombre/"+$nombre+"/"+$paterno+"/"+$materno, 
 								function (resp) {
 									if(resp.response){
 											if($curp){
@@ -1023,7 +1024,7 @@
 													"json"
 												);
 											}
-									}else{
+									}else{*/
 										$.post("titular/add/", data,
 												function (resp) {
 													if(resp.response){
@@ -1038,17 +1039,17 @@
 												},
 												"json"
 										);
-									}
-								},
-								"json"
-							);
-						}else{
+//									}
+//								},
+//								"json"
+//							);
+						/*}else{
 							if($curpValue==""){
 								$('#item-curp').addClass('is-invalid');
 							}
 							swal({ type:"warning", title:"Oops!", text:"Verificar CURP", timer:3000 });
 							$("#btnSaveUsuario").removeAttr('disabled');
-						}
+						}*/
 					}else{
 						if($nombre==""){
 							$('#item-nombre').addClass('is-invalid');
@@ -1064,7 +1065,7 @@
 					}
 				});
 
-				$('#item-curp').change(function(){
+				/*$('#item-curp').change(function(){
 					curp = $.trim($(this).val().toUpperCase());
 					if(curp != ''){
 						$.get($apiUrl+"integrante/findByCURP/"+curp, 
@@ -1082,7 +1083,7 @@
 							"json"
 						);
 					}
-				});
+				});*/
 
 				$('#item-nombre').change(function(){
 					$('#item-nombre').removeClass('is-invalid');

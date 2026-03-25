@@ -32,7 +32,7 @@
             }else{
                 $res = $this->model->asistencia->getByCred($cred);
 				if($res->response){
-					if($res->result->fecha_visita == date('w')){
+					if($res->result->fecha_visita == 0){
 						if($res->result->visita == date('d/m/Y')){
 							$arrRes = array('found' => true, 'error' => true, 'baja' => false, 'msg' => 'Ya pasó el día de hoy');
 						}else{
@@ -96,8 +96,73 @@
 							}
 						}
 					}else{
-						$arrDia = array('','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado');
-						$arrRes = array('found' => true, 'error' => true, 'baja' => false, 'msg' => 'Le toca el día '.$arrDia[$res->result->fecha_visita]);
+						if($res->result->fecha_visita == date('w')){
+							if($res->result->visita == date('d/m/Y')){
+								$arrRes = array('found' => true, 'error' => true, 'baja' => false, 'msg' => 'Ya pasó el día de hoy');
+							}else{
+								if($res->result->estatus == 1){
+									if($res->result->faltas < 4){
+										//return $response->withJson($res);
+										$foto = 'data/fotos/'.$res->result->credencial.'.jpg';
+										if(!file_exists($foto)) $foto = '';
+										if($foto == ''){
+											$foto = 'data/fotos/'.$res->result->credencial.'.JPG';
+											if(!file_exists($foto)) $foto = '';
+										}
+										if($foto == ''){
+											$foto = 'data/fotos/'.$res->result->credencial.'.png';
+											if(!file_exists($foto)) $foto = '';
+										}
+										// PASAR ASISTENCIA
+										$tit = $res->result->id_titular;
+										$asistencia = $this->model->asistencia->getAsistencia($tit);
+										if(!$asistencia->response){
+											$addAsist = $this->model->asistencia->addAsistencia($tit, $res->result->faltas);
+											if($addAsist=="0"){
+												$addAsist->state = $this->model->transaction->regresaTransaccion(); 
+												return $response->withJson($addAsist);
+											}
+											$editDateTitu = $this->model->asistencia->editUltimaVisita($tit);
+											if($editDateTitu=="0"){
+												$editDateTitu->state = $this->model->transaction->regresaTransaccion(); 
+												return $response->withJson($editDateTitu);
+											}
+										}
+										$arrRes = array('found' => true, 
+														'error' => false, 
+														'nombre' => utf8_encode($res->result->nomTit), 
+														'visita' => $res->result->visita, 
+														'falta' => $res->result->falta, 
+														'faltas' => intval($res->result->faltas), 
+														'obs' => $res->result->observaciones_asist, 
+														'foto' => $foto);
+									}else{
+										$tit = $res->result->id_titular;
+										$editEstatusBajas = $this->model->asistencia->editEstatusBajas($tit);
+										if($editEstatusBajas=="0"){
+											$editEstatusBajas->state = $this->model->transaction->regresaTransaccion(); 
+											return $response->withJson($editEstatusBajas);
+										}								
+										$arrRes = array('found' => true, 
+														'error' => true, 
+														'baja' => true, 
+														'nombre' => utf8_encode($res->result->nomTit), 
+														'faltas' => intval($res->result->faltas), 
+														'obs' => $res->result->observaciones_asist);
+									}
+								}else{
+									$arrRes = array('found' => true, 
+											'error' => true, 
+											'baja' => true, 
+											'nombre' => utf8_encode($res->result->nomTit), 
+											'faltas' => intval($res->result->faltas), 
+											'obs' => $res->result->observaciones_asist);
+								}
+							}
+						}else{
+							$arrDia = array('Todos','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado');
+							$arrRes = array('found' => true, 'error' => true, 'baja' => false, 'msg' => 'Le toca el día '.$arrDia[$res->result->fecha_visita]);
+						}
 					}
 				}else{
 					$arrRes = array('found' => false, 'res'=>$res);
@@ -142,7 +207,7 @@
 				foreach($result as $item){
 					if($item->hora==null){
 						if(is_object($cerrado)){
-							$item->faltas = $this->model->asistencia->getFaltas($item->id_titular, $fecha)->result->num_faltas;
+							$item->faltas = $this->model->asistencia->getFaltas($item->id_titular, $fecha)->result->num_faltas ?? 0;
 						}else{
 							$item->faltas = $this->model->titular->get($item->id_titular)->result->faltas;
 						}
@@ -236,7 +301,6 @@
 					}
 				}
 			}
-
 			if(is_object($cerrado)) {
 				$titulo = "Lista de Asistencia (Cerrada)"; 
 				$arrMes = array('','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre');
@@ -280,8 +344,6 @@
 			$titulo = "Lista de Bajas"; 
 			$arrMes = array('','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre');
 			$sub2 = "Del ".substr($fecha,8,10)." de ".$arrMes[intval(substr($fecha,5,7))]." de ".substr($fecha,0,4);
-			
-			//print_r($result);
 			
 			$total = count($result);
 			$ex = explode(',',$arguments['tipo']);
